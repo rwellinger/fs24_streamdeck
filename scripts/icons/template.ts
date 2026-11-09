@@ -759,15 +759,15 @@ const ACTION_GLYPHS: Record<string, string> = {
     <polygon points="16.8,10 14.5,7.5 14.5,12.5" fill="#ffffff"/>`,
 
 	// Screen / readout — "live DataRef value".
-	"dataref-display": `<rect x="2.5" y="5" width="15" height="10" rx="1" fill="none" stroke="#ffffff" stroke-width="1.5"/>
+	"var-display": `<rect x="2.5" y="5" width="15" height="10" rx="1" fill="none" stroke="#ffffff" stroke-width="1.5"/>
     <line x1="5" y1="10" x2="15" y2="10" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"/>`,
 
 	// Toggle switch — "two-state DataRef".
-	"dataref-toggle": `<rect x="2.5" y="7" width="15" height="6" rx="3" fill="none" stroke="#ffffff" stroke-width="1.5"/>
+	"var-toggle": `<rect x="2.5" y="7" width="15" height="6" rx="3" fill="none" stroke="#ffffff" stroke-width="1.5"/>
     <circle cx="13" cy="10" r="2" fill="#ffffff"/>`,
 
 	// Pen — "write a value to a DataRef".
-	"dataref-write": `<path d="M3,17 L4.5,12.5 L13,4 L16,7 L7.5,15.5 L3,17 Z" fill="none" stroke="#ffffff" stroke-width="1.5" stroke-linejoin="round"/>
+	"var-write": `<path d="M3,17 L4.5,12.5 L13,4 L16,7 L7.5,15.5 L3,17 Z" fill="none" stroke="#ffffff" stroke-width="1.5" stroke-linejoin="round"/>
     <line x1="11" y1="6" x2="14" y2="9" stroke="#ffffff" stroke-width="1.5"/>`,
 
 	// `background` deliberately omitted — its Stream Deck library tile keeps
@@ -776,7 +776,7 @@ const ACTION_GLYPHS: Record<string, string> = {
 	// `bg_*.png` files from out/icons/backgrounds/ after dropping the action.
 
 	// Three stacked lines — "multiple values at once".
-	"multi-dataref-display": `<line x1="3" y1="6" x2="17" y2="6" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round"/>
+	"multi-var-display": `<line x1="3" y1="6" x2="17" y2="6" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round"/>
     <line x1="3" y1="10" x2="17" y2="10" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round"/>
     <line x1="3" y1="14" x2="17" y2="14" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round"/>`,
 

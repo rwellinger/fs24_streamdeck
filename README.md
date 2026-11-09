@@ -2,7 +2,7 @@
 
 Stream Deck plugin for **Microsoft Flight Simulator 2024**. Talks to the sim directly via SimConnect — no extra app, no background service.
 
-> Status: early development (milestone M01). The only action so far is **Command** (fire any K:-event, e.g. `TOGGLE_NAV_LIGHTS`).
+> Status: early development (milestone M02). Actions: **Command**, **Variable Toggle**, **Variable Display**, **Variable Switch**, **Variable Lamp**.
 
 ## Requirements
 
@@ -36,6 +36,40 @@ Key feedback:
 - green check — event sent
 - yellow triangle — no event name, invalid value, unknown event name, or the sim is not connected (details in the plugin log)
 - **SIM OFFLINE** tile — no SimConnect connection for more than 3 s. The plugin retries automatically; as soon as MSFS is running again the tile disappears, no Stream Deck restart needed.
+
+### Variables and events
+
+Every variable field accepts:
+
+| Syntax | Meaning | Example |
+|---|---|---|
+| `A:NAME[:index], unit` | SimVar — unit required | `A:LIGHT STROBE, Bool`, `A:ROTOR RPM:1, rpm` |
+| `L:name[, unit]` | local var of the aircraft (unit default `Number`) | `L:H145_SDK_OH_PITOT_1` |
+| `B:name` | input event (cockpit switch as the aircraft defines it) | `B:FUEL_PUMP` |
+
+Event fields take `K:-event [value]`, e.g. `STROBES_TOGGLE` or `MAGNETO1_SET 3`. Names pasted from AAO, such as `(A:LIGHT STROBE, Bool)`, work as-is.
+
+Under each field the property inspector shows the live value, or why it can't be read. Unknown `A:`/`B:` names show `not found`. Unknown `L:` vars read as `0` — MSFS doesn't report them.
+
+### Variable Toggle
+
+Two-state key. The image follows the **state variable** (ON if the value is closer to *Value ON* than to *Value OFF*). A press either writes ON/OFF to a variable, fires one K:-event (`STROBES_TOGGLE`), or fires separate ON/OFF events (`MAGNETO1_SET 3` / `MAGNETO1_SET 0`). *Hold mode* makes it momentary. Orientation, color and a label are drawn by the plugin.
+
+### Variable Display
+
+Shows a variable as the key title, formatted printf-style: `%d`, `%.1f`, `%d kt`.
+
+### Variable Switch
+
+N-position switch, e.g. off / on / auto. A short press steps toward *Max*, a long press (≥ 0.5 s) toward *Min*. It writes the new value, fires `EVENT <new value>`, or fires separate up/down events. *Labels* such as `0=OFF,1=ON,2=AUTO` set the title.
+
+### Variable Lamp
+
+Indicator light, lit while the variable equals *Value ON*. Read-only.
+
+### Press condition
+
+Toggle and Switch can require a condition before a press acts, e.g. *only if `A:ELECTRICAL MASTER BATTERY, Bool` == 1*. If the condition isn't met, the key shows the alert.
 
 ### Connection settings
 

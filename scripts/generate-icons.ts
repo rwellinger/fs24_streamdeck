@@ -41,15 +41,15 @@ import {
 // Action UUIDs whose key.png / key@2x.png should be the neutral default
 // (subtle blue-framed empty tile) instead of the glyph scaled up. The action
 // picker (icon.png) keeps the glyph in all cases.
-// `dataref-toggle` is intentionally excluded — its on/off state images take
+// `var-toggle` is intentionally excluded — its on/off state images take
 // over the moment the button is configured.
 const NEUTRAL_DEFAULT_KEY_ACTIONS: ReadonlySet<string> = new Set([
 	"command",
 	"command-display",
 	"rotary",
-	"dataref-display",
-	"dataref-write",
-	"multi-dataref-display",
+	"var-display",
+	"var-write",
+	"multi-var-display",
 	"wind-display",
 	"guarded-command",
 ]);

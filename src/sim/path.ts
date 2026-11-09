@@ -72,6 +72,24 @@ export function parseEventName(raw: string): ParseResult<string> {
 	return { ok: true, path: s };
 }
 
+export type EventSpec = { name: string; value: number };
+
+/** `K:NAME [value]` — e.g. `MAGNETO1_SET 3`; value defaults to 0. */
+export function parseEventSpec(raw: string): ParseResult<EventSpec> {
+	const parts = unwrap(raw)
+		.split(/[\s,]+/)
+		.filter(Boolean);
+	if (parts.length === 0) return { ok: false, error: "empty" };
+	if (parts.length > 2) return { ok: false, error: `too many parts in "${raw.trim()}"` };
+	const name = parseEventName(parts[0]);
+	if (!name.ok) return name;
+	if (parts.length === 1) return { ok: true, path: { name: name.path, value: 0 } };
+	const value = Number(parts[1]);
+	if (!Number.isInteger(value))
+		return { ok: false, error: `event value must be an integer ("${parts[1]}")` };
+	return { ok: true, path: { name: name.path, value } };
+}
+
 export function describeVar(p: VarPath): string {
 	return p.kind === "B" ? `B:${p.name}` : `${p.kind}:${p.name}, ${p.unit}`;
 }

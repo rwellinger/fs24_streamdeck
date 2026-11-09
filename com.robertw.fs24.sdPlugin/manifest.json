@@ -7,7 +7,7 @@
 			"Name": "Command",
 			"UUID": "com.robertw.fs24.command",
 			"Icon": "imgs/actions/command/icon",
-			"Tooltip": "Fire any MSFS K:-event by name (e.g. TOGGLE_NAV_LIGHTS).",
+			"Tooltip": "Fire any MSFS K:-event by name (e.g. TOGGLE_NAV_LIGHTS); optional auto-repeat while held.",
 			"PropertyInspectorPath": "ui/command.html",
 			"Controllers": [
 				"Keypad"
@@ -15,6 +15,84 @@
 			"States": [
 				{
 					"Image": "imgs/actions/command/key",
+					"TitleAlignment": "middle"
+				}
+			]
+		},
+		{
+			"Name": "Variable Toggle",
+			"UUID": "com.robertw.fs24.var-toggle",
+			"Icon": "imgs/actions/var-toggle/icon",
+			"Tooltip": "Two-state button: image follows a live A:/L:/B: variable; a press writes ON/OFF values or fires K:-events. Hold Mode = momentary press/release.",
+			"PropertyInspectorPath": "ui/var-toggle.html",
+			"Controllers": [
+				"Keypad"
+			],
+			"DisableAutomaticStates": true,
+			"States": [
+				{
+					"Image": "imgs/states/off",
+					"TitleAlignment": "middle"
+				},
+				{
+					"Image": "imgs/states/on",
+					"TitleAlignment": "middle"
+				}
+			]
+		},
+		{
+			"Name": "Variable Display",
+			"UUID": "com.robertw.fs24.var-display",
+			"Icon": "imgs/actions/var-display/icon",
+			"Tooltip": "Show a live A:/L:/B: variable as the button title (printf-style format).",
+			"PropertyInspectorPath": "ui/var-display.html",
+			"Controllers": [
+				"Keypad"
+			],
+			"States": [
+				{
+					"Image": "imgs/actions/var-display/key",
+					"TitleAlignment": "middle"
+				}
+			]
+		},
+		{
+			"Name": "Variable Switch",
+			"UUID": "com.robertw.fs24.var-switch",
+			"Icon": "imgs/actions/var-toggle/icon",
+			"Tooltip": "N-position switch on one variable. Short press steps toward Max, long press (≥500 ms) toward Min; writes the value or fires K:-events.",
+			"PropertyInspectorPath": "ui/var-switch.html",
+			"Controllers": [
+				"Keypad"
+			],
+			"DisableAutomaticStates": true,
+			"States": [
+				{
+					"Image": "imgs/states/switch_up",
+					"TitleAlignment": "middle"
+				},
+				{
+					"Image": "imgs/states/switch_mid",
+					"TitleAlignment": "middle"
+				},
+				{
+					"Image": "imgs/states/switch_down",
+					"TitleAlignment": "middle"
+				}
+			]
+		},
+		{
+			"Name": "Variable Lamp",
+			"UUID": "com.robertw.fs24.var-lamp",
+			"Icon": "imgs/actions/var-toggle/icon",
+			"Tooltip": "Colored indicator lamp, lit while the variable equals Value ON. Read-only.",
+			"PropertyInspectorPath": "ui/var-lamp.html",
+			"Controllers": [
+				"Keypad"
+			],
+			"States": [
+				{
+					"Image": "imgs/actions/var-toggle/key",
 					"TitleAlignment": "middle"
 				}
 			]

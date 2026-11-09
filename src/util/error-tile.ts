@@ -43,12 +43,8 @@ export function clearTile<T extends JsonObject>(action: KeyAction<T>, label = ""
 /**
  * Replaces the action's image with the bundle-local "SIM OFFLINE" placeholder
  * and clears the title so the placeholder isn't covered by leftover labels
- * or live values. Used by every action when the X-Plane connection has been
- * absent long enough for the client to emit "offline".
- *
- * No-op for DialActions — the offline placeholder is designed for the 144×144
- * key bitmap. Encoders show their offline state on the touch strip instead,
- * via setDialFeedback(..., "OFFLINE") in src/actions/encoder.ts.
+ * or live values. Used by every action when the SimConnect connection has
+ * been absent long enough for the client to emit "offline". No-op for dials.
  */
 export async function setOffline<T extends JsonObject>(
 	action: KeyAction<T> | DialAction<T>,

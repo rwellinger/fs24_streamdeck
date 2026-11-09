@@ -1,0 +1,159 @@
+<!doctype html>
+<!--
+  fs24_streamdeck - Stream Deck plugin for MSFS 2024
+  Copyright (c) 2026 thWelly
+
+  Licensed under the MIT License.
+  See the LICENSE file in the project root for full license text.
+-->
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>MSFS Variable Switch</title>
+		<script src="https://sdpi-components.dev/releases/v4/sdpi-components.js"></script>
+		<script src="sim-pi-helpers.js"></script>
+		<style>
+			.live { font-family: monospace; font-size: 11px; color: #9a9; word-break: break-all; }
+			.live[data-state="not-found"], .live[data-state="error"] { color: #d97; }
+			.live[data-state="offline"] { color: #888; }
+			.hint { color: #888; font-size: 11px; margin: 0 12px 8px; }
+		</style>
+	</head>
+	<body>
+		<sdpi-item label="Variable">
+			<sdpi-textfield setting="varPath" id="varField" placeholder="A:RECIP ENG LEFT MAGNETO:1, Bool" required></sdpi-textfield>
+		</sdpi-item>
+		<sdpi-item label="">
+			<span class="live" id="varFieldLive"></span>
+		</sdpi-item>
+		<div class="hint">
+			<code>A:NAME[:index], unit</code> · <code>L:name[, unit]</code> · <code>B:name</code> —
+			e.g. <code>A:LIGHT STROBE, Bool</code>, <code>B:FUEL_PUMP</code>
+		</div>
+		<sdpi-item label="Min">
+			<sdpi-textfield setting="minValue" placeholder="-1"></sdpi-textfield>
+		</sdpi-item>
+		<sdpi-item label="Max">
+			<sdpi-textfield setting="maxValue" placeholder="1"></sdpi-textfield>
+		</sdpi-item>
+		<sdpi-item label="Step">
+			<sdpi-textfield setting="step" placeholder="1"></sdpi-textfield>
+		</sdpi-item>
+		<div class="hint">Short press steps toward Max, long press (≥ 500 ms) toward Min.</div>
+		<sdpi-item label="On press">
+			<sdpi-select setting="triggerMode" default="write" id="modeSelect">
+				<option value="write">Write new value</option>
+				<option value="event-set">Fire K:-event with new value</option>
+				<option value="event-incdec">Fire up / down K:-events</option>
+			</sdpi-select>
+		</sdpi-item>
+		<div id="eventSetItems">
+			<sdpi-item label="K:-Event">
+				<sdpi-textfield setting="eventSet" id="eventSetField" placeholder="e.g. MAGNETO1_SET"></sdpi-textfield>
+			</sdpi-item>
+			<sdpi-item label=""><span class="live" id="eventSetFieldLive"></span></sdpi-item>
+		</div>
+		<div id="eventIncDecItems">
+			<sdpi-item label="Event up">
+				<sdpi-textfield setting="eventUp" id="eventUpField" placeholder="e.g. MAGNETO1_INCR"></sdpi-textfield>
+			</sdpi-item>
+			<sdpi-item label=""><span class="live" id="eventUpFieldLive"></span></sdpi-item>
+			<sdpi-item label="Event down">
+				<sdpi-textfield setting="eventDown" id="eventDownField" placeholder="e.g. MAGNETO1_DECR"></sdpi-textfield>
+			</sdpi-item>
+			<sdpi-item label=""><span class="live" id="eventDownFieldLive"></span></sdpi-item>
+		</div>
+		<sdpi-item label="Labels">
+			<sdpi-textfield setting="labels" placeholder="e.g. 0=OFF,1=R,2=L,3=BOTH"></sdpi-textfield>
+		</sdpi-item>
+		<sdpi-item label="Feedback">
+			<sdpi-checkbox setting="hideShortConfirmation" label="Hide green confirmation on short press"></sdpi-checkbox>
+		</sdpi-item>
+		<sdpi-item label="Endstop">
+			<sdpi-checkbox setting="hideEndstopAlert" label="No alert at Min / Max"></sdpi-checkbox>
+		</sdpi-item>
+		<details>
+			<summary>Look</summary>
+			<sdpi-item label="Orientation">
+				<sdpi-select setting="orientation" default="vertical">
+					<option value="vertical">Vertical</option>
+					<option value="horizontal">Horizontal</option>
+				</sdpi-select>
+			</sdpi-item>
+			<sdpi-item label="Color">
+				<sdpi-select setting="bodyColor" default="gray">
+					<option value="gray">Gray</option>
+					<option value="red">Red</option>
+					<option value="green">Green</option>
+				</sdpi-select>
+			</sdpi-item>
+			<sdpi-item label="Label">
+				<sdpi-textfield setting="staticLabel" placeholder="e.g. MAGS"></sdpi-textfield>
+			</sdpi-item>
+			<sdpi-item label="Label position">
+				<sdpi-select setting="staticLabelPosition" default="top">
+					<option value="top">Top</option>
+					<option value="bottom">Bottom</option>
+				</sdpi-select>
+			</sdpi-item>
+			<sdpi-item label="Invert">
+				<sdpi-checkbox setting="invertDirection" label="Swap direction (short press toward Min)"></sdpi-checkbox>
+			</sdpi-item>
+		</details>
+
+		<details>
+			<summary>Press condition (optional)</summary>
+			<sdpi-item label="Only if">
+				<sdpi-textfield setting="conditionVar" id="conditionField" placeholder="e.g. A:ELECTRICAL MASTER BATTERY, Bool"></sdpi-textfield>
+			</sdpi-item>
+			<sdpi-item label="">
+				<span class="live" id="conditionFieldLive"></span>
+			</sdpi-item>
+			<sdpi-item label="Operator">
+				<sdpi-select setting="conditionOperator" default="eq">
+					<option value="eq">==</option>
+					<option value="ne">!=</option>
+					<option value="gt">&gt;</option>
+					<option value="ge">&gt;=</option>
+					<option value="lt">&lt;</option>
+					<option value="le">&lt;=</option>
+				</sdpi-select>
+			</sdpi-item>
+			<sdpi-item label="Value">
+				<sdpi-textfield setting="conditionValue" placeholder="1"></sdpi-textfield>
+			</sdpi-item>
+			<sdpi-item label="Applies to">
+				<sdpi-select setting="conditionScope" default="both">
+					<option value="both">Both directions</option>
+					<option value="on">Switching ON / up only</option>
+					<option value="off">Switching OFF / down only</option>
+				</sdpi-select>
+			</sdpi-item>
+			<sdpi-item label="Alert">
+				<sdpi-checkbox setting="hideConditionAlert" label="No alert when the condition blocks a press"></sdpi-checkbox>
+			</sdpi-item>
+		</details>
+
+		<details>
+			<summary>SimConnect connection (all buttons)</summary>
+			<sdpi-item label="Sim host">
+				<sdpi-textfield setting="simHost" global placeholder="empty = this PC (local)"></sdpi-textfield>
+			</sdpi-item>
+			<sdpi-item label="Port">
+				<sdpi-textfield setting="simPort" global placeholder="500" pattern="[0-9]*"></sdpi-textfield>
+			</sdpi-item>
+		</details>
+		<script>
+			SimPI.attachProbe("varField", "varFieldLive");
+			SimPI.attachProbe("eventSetField", "eventSetFieldLive", "event");
+			SimPI.attachProbe("eventUpField", "eventUpFieldLive", "event");
+			SimPI.attachProbe("eventDownField", "eventDownFieldLive", "event");
+			SimPI.attachProbe("conditionField", "conditionFieldLive");
+			SimPI.showWhen(
+				"modeSelect",
+				{ eventSetItems: ["event-set"], eventIncDecItems: ["event-incdec"] },
+				"write",
+			);
+		</script>
+	</body>
+</html>

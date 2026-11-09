@@ -9,8 +9,13 @@
 import streamDeck from "@elgato/streamdeck";
 
 import { SimCommand } from "./actions/command";
+import { VarDisplay } from "./actions/var-display";
+import { VarLamp } from "./actions/var-lamp";
+import { VarSwitch } from "./actions/var-switch";
+import { VarToggle } from "./actions/var-toggle";
 import { SimClient } from "./sim";
 import { type GlobalSettings, targetFromSettings } from "./sim/global-settings";
+import { installProbeHandler } from "./sim/probe";
 
 streamDeck.logger.setLevel("info");
 
@@ -21,6 +26,11 @@ streamDeck.settings.onDidReceiveGlobalSettings<GlobalSettings>((ev) => {
 });
 
 streamDeck.actions.registerAction(new SimCommand(sim));
+streamDeck.actions.registerAction(new VarToggle(sim));
+streamDeck.actions.registerAction(new VarDisplay(sim));
+streamDeck.actions.registerAction(new VarSwitch(sim));
+streamDeck.actions.registerAction(new VarLamp(sim));
+installProbeHandler(sim);
 
 streamDeck
 	.connect()

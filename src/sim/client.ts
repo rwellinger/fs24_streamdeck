@@ -44,6 +44,7 @@ const OPEN_TIMEOUT_MS = 6000;
 // Grace period before "offline" so a quick reconnect doesn't flash the tile.
 const OFFLINE_DELAY_MS = 3000;
 const BARRIER_TIMEOUT_MS = 2000;
+const READ_TIMEOUT_MS = 1500;
 // NotificationPriority.HIGHEST — const enum in node-simconnect's typings.
 const PRIORITY_HIGHEST = 1;
 // Fixed client event IDs for system events; K:-event IDs start above them.
@@ -91,6 +92,38 @@ export class SimClient extends EventEmitter<ClientEvents> {
 	/** Last known value; `undefined` = no data yet, `null` = unresolvable. */
 	peek(path: VarPath): number | null | undefined {
 		return this.vars.peek(path);
+	}
+
+	/**
+	 * One-shot read (press conditions, PI live preview). Uses the cached value
+	 * of an existing subscription, else subscribes briefly. Rejects when the
+	 * var is unknown or no value arrives in time.
+	 */
+	read(path: VarPath, timeoutMs = READ_TIMEOUT_MS): Promise<number> {
+		if (!this.handle) return Promise.reject(new Error("SimConnect not connected"));
+		const cached = this.vars.peek(path);
+		if (typeof cached === "number") return Promise.resolve(cached);
+		return new Promise<number>((resolve, reject) => {
+			let unsubscribe: (() => void) | undefined;
+			let done = false;
+			const finish = (fn: () => void) => {
+				if (done) return;
+				done = true;
+				clearTimeout(timer);
+				queueMicrotask(() => unsubscribe?.());
+				fn();
+			};
+			const timer = setTimeout(
+				() => finish(() => reject(new Error(`no value for ${describeVar(path)}`))),
+				timeoutMs,
+			);
+			unsubscribe = this.vars.subscribe(path, (v) =>
+				finish(() =>
+					v === null ? reject(new Error(`unknown ${describeVar(path)}`)) : resolve(v),
+				),
+			);
+			if (done) unsubscribe();
+		});
 	}
 
 	async write(path: VarPath, value: number): Promise<void> {

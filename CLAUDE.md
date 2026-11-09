@@ -97,17 +97,17 @@ fs24_streamdeck/
 - Read settings via `ev.payload.settings`; trim string inputs.
 - **`STATE_DIRTY = -1`** to force the next render after settings change / reconnect / re-subscription.
 
-## Shared Helpers (copied, adapt as needed)
+## Sim layer and shared helpers
 
-- `src/sim/types.ts` — `SimValue` (replaces X-Plane's `DataRefValue`; narrow it once the SimConnect client exists).
-- `src/util/coerce.ts` — `toFiniteNumber`, `coerceNumber`, `describeValue`.
-- `src/util/settings.ts` — `trimString`, `trimStringOr`, `normalizeFormat`.
-- `src/util/format.ts` — `formatSimValue` (printf-style). Still contains X-Plane `data`-type decoding — strip it when the first display action lands.
-- `src/util/error-tile.ts` — offline / not-found tiles.
-- `src/util/*-svg.ts`, `*-image.ts` — runtime tile renderers (lamp, switch, toggle, selector, multi-display, wind).
-- `src/const.ts` — `TIMINGS`, `TOLERANCE_FLOAT`.
+- `src/sim/path.ts` — path syntax: `A:NAME[:n], unit` / `L:name[, unit]` / `B:name` (`VarPath`), `K:EVENT [value]` (`parseEventSpec`). AAO-style `(A:…)` accepted.
+- `src/sim/vars.ts` — `VarRegistry`: ref-counted subscriptions (one data definition per var+unit), B: hash resolution via input-event enumeration, writes, re-registration on reconnect, refresh on aircraft change, 10 Hz emit throttle. Values are plain `number`; `null` = unknown var.
+- `src/sim/client.ts` — connection, K:-events, `subscribe` / `read` / `write`, events `online` / `offline` / `aircraftChanged`.
+- `src/sim/probe.ts` + `ui/sim-pi-helpers.js` — PI live preview via `sendToPlugin` (the PI can't reach SimConnect itself).
+- `src/actions/base/var-action.ts` — base for actions rendering one subscribed var (offline / not-found / aircraft change handled there).
+- `src/util/condition.ts` — press condition (reads the var at press time).
+- `src/util/coerce.ts`, `settings.ts`, `format.ts` (`formatSimValue`, numbers only), `error-tile.ts`, `*-svg.ts` / `*-image.ts` renderers, `src/const.ts`.
 
-Not copied (X-Plane-specific, port when needed): `dataref-path`, `condition`, `macro-*`, all actions, the client, all PIs. Port from `~/Workspace/x-plane/xp_streamdeck/src/` when a milestone needs them.
+Not ported yet (port from `~/Workspace/x-plane/xp_streamdeck/src/` when needed): `macro-*`, selectors/placeholders, guarded, multi-display, wind. Rotary/encoder were dropped (Stream Deck XL has no dials).
 
 ## Button Icon Pipeline
 
