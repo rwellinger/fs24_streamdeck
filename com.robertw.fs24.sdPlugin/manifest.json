@@ -7,7 +7,7 @@
 			"Name": "Command",
 			"UUID": "com.robertw.fs24.command",
 			"Icon": "imgs/actions/command/icon",
-			"Tooltip": "Fire any MSFS K:-event by name (e.g. PAUSE_TOGGLE).",
+			"Tooltip": "Fire any MSFS K:-event by name (e.g. TOGGLE_NAV_LIGHTS).",
 			"PropertyInspectorPath": "ui/command.html",
 			"Controllers": [
 				"Keypad"

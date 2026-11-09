@@ -36,20 +36,20 @@ Sibling project: `~/Workspace/x-plane/xp_streamdeck` (X-Plane 12). Sim-agnostic 
 
 **No Node, Visual Studio, MSFS SDK or any dev tool gets installed on the sim PC.** The only allowed changes there: SimConnect remote-access config (`SimConnect.xml`) plus a firewall rule, and installing the release artefacts.
 
-MS Store paths (to be verified in M01, then corrected here):
-- `SimConnect.xml`: `%LOCALAPPDATA%\Packages\Microsoft.Limitless_8wekyb3d8bbwe\LocalCache\SimConnect.xml`
-- `UserCfg.opt` (holds `InstalledPackagesPath`, → Community folder): `%LOCALAPPDATA%\Packages\Microsoft.Limitless_8wekyb3d8bbwe\LocalCache\UserCfg.opt`
+MS Store paths:
+- `SimConnect.xml`: `%LOCALAPPDATA%\Packages\Microsoft.Limitless_8wekyb3d8bbwe\LocalCache\SimConnect.xml` (verified M01). Ships with a pipe, IPv4 `500` and IPv6 `501` entry (local scope). Remote dev access = additional global IPv4 entry on `502`. A plugin on the sim PC connects locally with no config (node-simconnect autodetect).
+- `UserCfg.opt` (holds `InstalledPackagesPath`, → Community folder): `%LOCALAPPDATA%\Packages\Microsoft.Limitless_8wekyb3d8bbwe\LocalCache\UserCfg.opt` (not yet verified — needed in M03)
 
 ### MSFS SDK licensing
 
-SDK headers/libs must **never** be committed (`/sdk/` is gitignored). The repo is private for now; whether it can go public depends on keeping SDK files out. How CI obtains them is decided in M03.
+SDK headers/libs must **never** be committed (`/sdk/` is gitignored). The repo is **public** (since M01) — SDK files and third-party profiles/scripts must stay out. How CI obtains them is decided in M03.
 
 ## MSFS variable model (vs. X-Plane)
 
 | MSFS | Read | Write | Path |
 |---|---|---|---|
 | `A:` SimVar | yes | some (settable SimVars) | SimConnect, needs **unit** (`A:LIGHT BEACON, Bool`), index via `:n` |
-| `K:` event | – | trigger (+ value) | SimConnect `MapClientEventToSimEvent` |
+| `K:` event | – | trigger (+ value) | SimConnect `MapClientEventToSimEvent`. Pause events (`PAUSE_TOGGLE`/`PAUSE_SET`) have no effect in 2024 from an external client → test via WASM RPN in M03 |
 | `L:` var | yes | yes | SimConnect data definition with `L:` prefix |
 | `L:1:` scoped var (2024-native aircraft) | flaky | flaky | known SimConnect issues — avoid, fall back to WASM |
 | `B:` input event | yes | yes | SimConnect InputEvent API (verify in M01) |

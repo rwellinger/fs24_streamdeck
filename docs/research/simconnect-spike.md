@@ -1,42 +1,45 @@
 # SimConnect spike (M01)
 
-Results of `scripts/smoke-simconnect.ts` against MSFS 2024 (MS Store) over remote SimConnect.
-**Status: not yet run against the live sim** — fill in after the run.
+Findings from bringing up the walking skeleton against MSFS 2024 (MS Store). Partly from the plugin running **locally on the sim PC**, partly still open (remote smoke script).
 
 ## Setup
 
 | | |
 |---|---|
-| Date | _TBD_ |
-| MSFS version (from step 1) | _TBD_ |
-| SimConnect version (from step 1) | _TBD_ |
+| Date | 2026-11-09 |
+| MSFS reported by SimConnect | `SunRise 12.2` (= MSFS 2024) |
 | node-simconnect | 4.2.1 |
-| Protocol requested | KittyHawk (also try `FS24_PROTOCOL=sunrise`) |
-| Aircraft loaded | _TBD_ |
-| Client | Mac, Node 24, TCP → sim PC port 500 |
+| Protocol requested | `KittyHawk` — accepted by MSFS 2024 |
+| Aircraft | Guimbal Cabri G2 |
+| Client | Stream Deck plugin on the sim PC (installed from CI artifact), host empty → local autodetect |
 
-## Paths (MS Store edition)
+## Paths and default config (MS Store edition)
 
-| File | Expected | Verified |
-|---|---|---|
-| `SimConnect.xml` | `%LOCALAPPDATA%\Packages\Microsoft.Limitless_8wekyb3d8bbwe\LocalCache\SimConnect.xml` | _TBD_ |
-| `UserCfg.opt` | `%LOCALAPPDATA%\Packages\Microsoft.Limitless_8wekyb3d8bbwe\LocalCache\UserCfg.opt` | _TBD_ |
-| Default local pipe name | `\\.\pipe\Microsoft Flight Simulator\SimConnect` (node-simconnect autodetect) | _TBD_ (from the `<Address>` of the pipe entry in `SimConnect.xml`) |
+| Item | Result |
+|---|---|
+| `SimConnect.xml` | `%LOCALAPPDATA%\Packages\Microsoft.Limitless_8wekyb3d8bbwe\LocalCache\SimConnect.xml` — exists |
+| Default entries | named pipe, IPv4 port `500` (local scope), IPv6 port `501` |
+| Remote dev entry | added: IPv4, global scope, LAN IP, port `502` + firewall rule (private profile) |
+| Local connect (plugin on sim PC, host empty) | **works** — node-simconnect autodetect, no config needed |
+| `UserCfg.opt` | not yet verified (needed in M03) |
 
 ## Results
 
-| Step | Result | Notes / exact errors |
+| Check | Result | Notes |
 |---|---|---|
-| 1 connect, app name/version | _TBD_ | |
-| 2 read `A:PLANE ALTITUDE, feet` / `A:LIGHT BEACON, Bool` | _TBD_ | |
-| 3 subscribe `LIGHT BEACON` (SIM_FRAME + CHANGED) | _TBD_ | |
-| 4 read L:-var via `L:` prefix | _TBD_ | |
-| 5 `K:PAUSE_TOGGLE` ×2 | _TBD_ | |
-| 5b unknown K:-event rejected? | _TBD_ | plugin relies on an exception here to show the alert |
-| 6 B: input events (enumerate / get / set) | _TBD_ | decides M05 scope without WASM |
-| 7 clean disconnect | _TBD_ | |
-| 7b MSFS closed mid-run (`FS24_QUIT_WATCH_S`) | _TBD_ | quit / close / error / silent hang? |
+| Connect locally, detect sim | ✅ | `SimConnect connected: SunRise 12.2 via local (autodetect)` |
+| `K:STROBES_TOGGLE` | ✅ | strobe on/off (value is ignored) |
+| `K:TOGGLE_NAV_LIGHTS` | ✅ | nav lights on/off |
+| `K:PAUSE_TOGGLE` | ❌ no effect | sent without SimConnect exception, sim does not pause |
+| `K:PAUSE_SET` 1/0 | ❌ no effect | same; community reports confirm pause events from external SimConnect clients don't work in 2024 — reportedly `1 (>K:PAUSE_SET)` works as RPN inside the sim → test via WASM bridge in M03 |
+| Empty event name in PI | ⚠️ UX | placeholder looked like a value → user pressed with empty setting; placeholders changed to `e.g. …` |
+| Remote connect Mac → sim PC (port 502) | open | not working yet; next step `nc -vz <ip> 502` |
+| Smoke script steps 2–7 (A: read, subscribe, L:, unknown K:, B: input events, quit behaviour) | open | needs remote connect |
+| Offline tile on MSFS quit + auto-recovery | open | |
 
-## Conclusions
+## Conclusions so far
 
-_TBD_
+- The core chain Stream Deck → plugin → SimConnect → MSFS 2024 works with plain node-simconnect, no external app.
+- End users need **no** `SimConnect.xml` change; remote config is a dev-only concern.
+- Pause can't be driven from an external SimConnect client in 2024 → candidate for the WASM bridge (RPN).
+- Open: does MSFS raise an exception for unknown K:-event names? The plugin's alert-on-typo relies on it (smoke step 5b).

@@ -2,7 +2,7 @@
 
 Stream Deck plugin for **Microsoft Flight Simulator 2024**. Talks to the sim directly via SimConnect — no extra app, no background service.
 
-> Status: early development (milestone M01). The only action so far is **Command** (fire any K:-event, e.g. `PAUSE_TOGGLE`).
+> Status: early development (milestone M01). The only action so far is **Command** (fire any K:-event, e.g. `TOGGLE_NAV_LIGHTS`).
 
 ## Requirements
 
@@ -27,7 +27,7 @@ Drag **MSFS 2024 → Command** onto a key and fill in the property inspector:
 
 | Field | Meaning |
 |---|---|
-| **K:-Event** | Event name, e.g. `PAUSE_TOGGLE`, `TOGGLE_BEACON_LIGHTS`. The `K:` prefix is optional. Event names: MSFS SDK docs ("Event IDs") or [HubHop](https://hubhop.mobiflight.com). |
+| **K:-Event** | Event name, e.g. `TOGGLE_NAV_LIGHTS`, `STROBES_TOGGLE`. The `K:` prefix is optional. Note: the pause events (`PAUSE_TOGGLE`, `PAUSE_SET`) have no effect in MSFS 2024 when sent this way. Event names: MSFS SDK docs ("Event IDs") or [HubHop](https://hubhop.mobiflight.com). |
 | **Value** | Optional integer parameter of the event (default `0`). |
 | **Feedback** | Hide the green check mark after a successful press. |
 
@@ -43,7 +43,7 @@ Under **SimConnect connection** (in every Command key's property inspector — t
 
 | Field | Meaning |
 |---|---|
-| **Sim host** | Leave **empty** when Stream Deck runs on the same PC as MSFS (normal case). Enter an IP address only if MSFS runs on a different computer. |
+| **Sim host** | Leave **empty** when Stream Deck runs on the same PC as MSFS (normal case — verified with the MS Store edition, no `SimConnect.xml` change needed). Enter an IP address only if MSFS runs on a different computer. |
 | **Port** | Only used with a host. Default `500` (MSFS's built-in local IPv4 port). For a remote sim use the port of your remote entry, e.g. `502` (see below). |
 
 If the plugin can't connect while host is empty although MSFS is running, set **Sim host** to `127.0.0.1` and **Port** to `500` — this uses the local IPv4 entry MSFS 2024 ships in `SimConnect.xml`.
