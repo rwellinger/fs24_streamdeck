@@ -8,6 +8,12 @@ A robust SimConnect client with subscriptions, and the core actions that cover t
 
 M01 done; read `docs/research/simconnect-spike.md` first — its findings override assumptions here.
 
+### Carried over from M01 (do first)
+
+- **Remote dev loop:** Mac → sim PC on port `502` doesn't connect yet (entry + firewall rule exist). Start with `nc -vz <sim-pc-ip> 502`, then fix SimConnect.xml / firewall / network profile.
+- **Smoke script** (`scripts/smoke-simconnect.ts`) against the live sim, Cabri loaded: `FS24_PORT=502 FS24_WATCH_VAR="LIGHT STROBE" FS24_BEVENT=FUEL_PUMP FS24_BEVENT_VALUE=1 FS24_QUIT_WATCH_S=120`; L:-var step again with the H145. Fill the open rows in the spike doc. Step 6 decides whether B:-events are in scope below; step 5b decides whether unknown K:-names can be detected.
+- **Offline tile:** a user-set Stream Deck title always overrides `setTitle()`, so it overlaps "SIM OFFLINE". Redesign `renderSimOfflineIcon()` as a top/bottom band that leaves the centre free for the title.
+
 ## Scope
 
 ### Client (`src/sim/`)
@@ -43,7 +49,7 @@ H:-events, RPN, H145-specific actions (M03/M04), profiles per aircraft (M05).
 
 ## Acceptance criteria
 
-- [ ] Cabri G2: beacon toggle shows live state and switches; IAS/altitude display updates smoothly.
+- [ ] Cabri G2: strobe / nav light toggle shows live state and switches (the Cabri has no beacon); IAS/altitude display updates smoothly.
 - [ ] DA42: AP HDG mode toggle + heading bug nudge (K:-events) work; bug value display updates.
 - [ ] Aircraft change without restarting Stream Deck: buttons re-bind, no stale values.
 - [ ] MSFS restart: all buttons recover (offline tile → live).
@@ -51,4 +57,4 @@ H:-events, RPN, H145-specific actions (M03/M04), profiles per aircraft (M05).
 
 ## Verification
 
-Manual run from the Mac against the sim PC with the four aircraft above; note results per aircraft in the PR.
+Manual run from the Mac against the sim PC with the four aircraft above; note results per aircraft in the milestone issue (no PRs during development).
