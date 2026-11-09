@@ -1,9 +1,7 @@
 name: build
 
+# Manual only: Actions → build → "Run workflow", or `gh workflow run build.yml`.
 on:
-  push:
-    branches: [main]
-  pull_request:
   workflow_dispatch:
 
 permissions:

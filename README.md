@@ -139,7 +139,9 @@ SimConnect smoke test against a remote sim:
 FS24_HOST=<sim-pc-ip> FS24_PORT=502 npx tsx scripts/smoke-simconnect.ts
 ```
 
-Options are documented at the top of `scripts/smoke-simconnect.ts`. Every push to `main` and every PR is built by GitHub Actions (`.github/workflows/build.yml`); the packaged plugin is attached to the run as an artifact.
+Options are documented at the top of `scripts/smoke-simconnect.ts`.
+
+Release builds run on GitHub Actions (`.github/workflows/build.yml`), **manually only**: GitHub → Actions → *build* → *Run workflow*, or `gh workflow run build.yml`. The packaged plugin is attached to the run as an artifact.
 
 ## License
 
