@@ -1,0 +1,48 @@
+{
+	"Name": "MSFS 2024",
+	"Version": "0.0.1.0",
+	"Author": "Robert Wellinger",
+	"Actions": [
+		{
+			"Name": "Command",
+			"UUID": "com.robertw.fs24.command",
+			"Icon": "imgs/actions/command/icon",
+			"Tooltip": "Fire any MSFS K:-event by name (e.g. PAUSE_TOGGLE).",
+			"PropertyInspectorPath": "ui/command.html",
+			"Controllers": [
+				"Keypad"
+			],
+			"States": [
+				{
+					"Image": "imgs/actions/command/key",
+					"TitleAlignment": "middle"
+				}
+			]
+		}
+	],
+	"Category": "MSFS 2024",
+	"CategoryIcon": "imgs/plugin/category-icon",
+	"CodePath": "bin/plugin.js",
+	"Description": "Control Microsoft Flight Simulator 2024 from your Stream Deck via SimConnect.",
+	"SupportURL": "https://github.com/rwellinger/fs24_streamdeck/issues",
+	"Icon": "imgs/plugin/marketplace",
+	"SDKVersion": 3,
+	"Software": {
+		"MinimumVersion": "7.1"
+	},
+	"OS": [
+		{
+			"Platform": "windows",
+			"MinimumVersion": "10"
+		},
+		{
+			"Platform": "mac",
+			"MinimumVersion": "12"
+		}
+	],
+	"Nodejs": {
+		"Version": "24",
+		"Debug": "enabled"
+	},
+	"UUID": "com.robertw.fs24"
+}

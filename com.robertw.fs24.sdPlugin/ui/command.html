@@ -1,0 +1,43 @@
+<!doctype html>
+<!--
+  fs24_streamdeck - Stream Deck plugin for MSFS 2024
+  Copyright (c) 2026 thWelly
+
+  Licensed under the MIT License.
+  See the LICENSE file in the project root for full license text.
+-->
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>MSFS Command</title>
+		<script src="https://sdpi-components.dev/releases/v4/sdpi-components.js"></script>
+	</head>
+	<body>
+		<sdpi-item label="K:-Event">
+			<sdpi-textfield setting="eventName" placeholder="PAUSE_TOGGLE" required></sdpi-textfield>
+		</sdpi-item>
+		<sdpi-item label="Value">
+			<sdpi-textfield setting="eventValue" placeholder="0" pattern="-?[0-9]*"></sdpi-textfield>
+		</sdpi-item>
+		<sdpi-item label="Feedback">
+			<sdpi-checkbox
+				setting="hideConfirmation"
+				label="Hide green confirmation icon on success"
+			></sdpi-checkbox>
+		</sdpi-item>
+
+		<details>
+			<summary>SimConnect connection (all buttons)</summary>
+			<sdpi-item label="Sim host">
+				<sdpi-textfield
+					setting="simHost"
+					global
+					placeholder="empty = this PC (local)"
+				></sdpi-textfield>
+			</sdpi-item>
+			<sdpi-item label="Port">
+				<sdpi-textfield setting="simPort" global placeholder="500" pattern="[0-9]*"></sdpi-textfield>
+			</sdpi-item>
+		</details>
+	</body>
+</html>

@@ -30,6 +30,8 @@
         "typescript": "^5.2.2"
     },
     "dependencies": {
-        "@elgato/streamdeck": "^2.1.0"
+        "@elgato/streamdeck": "^2.1.0",
+        "@elgato/utils": "^0.6.2",
+        "node-simconnect": "^4.2.1"
     }
 }
