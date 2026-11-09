@@ -1,0 +1,35 @@
+{
+    "name": "fs24-streamdeck",
+    "version": "0.0.1",
+    "private": true,
+    "description": "Stream Deck plugin for Microsoft Flight Simulator 2024 via SimConnect.",
+    "author": "Robert Wellinger",
+    "type": "module",
+    "scripts": {
+        "build": "rollup -c",
+        "watch": "rollup -c -w --watch.onEnd=\"streamdeck restart com.robertw.fs24\"",
+        "icons": "tsx scripts/generate-icons.ts",
+        "lint": "biome check",
+        "lint:fix": "biome check --write",
+        "format": "biome format --write",
+        "format:check": "biome format"
+    },
+    "devDependencies": {
+        "@biomejs/biome": "2.4.14",
+        "@elgato/cli": "^1.7.4",
+        "@rollup/plugin-commonjs": "^29.0.2",
+        "@rollup/plugin-node-resolve": "^15.2.2",
+        "@rollup/plugin-terser": "^1.0.0",
+        "@rollup/plugin-typescript": "^12.1.0",
+        "@tsconfig/node20": "^20.1.2",
+        "@types/node": "~24.1.0",
+        "rollup": "^4.0.2",
+        "sharp": "^0.35.3",
+        "tslib": "^2.6.2",
+        "tsx": "^4.21.0",
+        "typescript": "^5.2.2"
+    },
+    "dependencies": {
+        "@elgato/streamdeck": "^2.1.0"
+    }
+}
