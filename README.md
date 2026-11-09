@@ -44,9 +44,9 @@ Under **SimConnect connection** (in every Command key's property inspector — t
 | Field | Meaning |
 |---|---|
 | **Sim host** | Leave **empty** when Stream Deck runs on the same PC as MSFS (normal case). Enter an IP address only if MSFS runs on a different computer. |
-| **Port** | Only used with a host. Default `500`. |
+| **Port** | Only used with a host. Default `500` (MSFS's built-in local IPv4 port). For a remote sim use the port of your remote entry, e.g. `502` (see below). |
 
-If the plugin can't connect while host is empty although MSFS is running, set **Sim host** to `127.0.0.1` and **Port** to `500` and add the IPv4 entry described below (bind address `127.0.0.1`).
+If the plugin can't connect while host is empty although MSFS is running, set **Sim host** to `127.0.0.1` and **Port** to `500` — this uses the local IPv4 entry MSFS 2024 ships in `SimConnect.xml`.
 
 ## Remote SimConnect (Stream Deck on another computer)
 
@@ -56,15 +56,15 @@ Needed only if Stream Deck runs on a different machine than MSFS (e.g. the devel
 2. Open `SimConnect.xml` of the Microsoft Store edition:
    `%LOCALAPPDATA%\Packages\Microsoft.Limitless_8wekyb3d8bbwe\LocalCache\SimConnect.xml`
    (paste the path into the Explorer address bar). Make a backup copy first.
-3. Inside `<SimBase.Document>`, keep the existing pipe entry and add:
+3. MSFS 2024 already ships several `<SimConnect.Comm>` entries — a named pipe, IPv4 on port `500` and IPv6 on port `501`, all with `<Scope>local</Scope>`. **Leave them unchanged** (local tools and the plugin's local mode use them) and add a new entry inside `<SimBase.Document>` on a free port, e.g. `502`:
 
    ```xml
    <SimConnect.Comm>
-       <Descr>Static IP4 port</Descr>
+       <Descr>Remote IPv4 (Stream Deck)</Descr>
        <Protocol>IPv4</Protocol>
        <Scope>global</Scope>
        <Address>192.168.1.50</Address>   <!-- LAN IP of the sim PC -->
-       <Port>500</Port>
+       <Port>502</Port>
        <MaxClients>64</MaxClients>
        <MaxRecvSize>41088</MaxRecvSize>
    </SimConnect.Comm>
@@ -74,13 +74,13 @@ Needed only if Stream Deck runs on a different machine than MSFS (e.g. the devel
 4. Allow the port in the Windows firewall — open **PowerShell as administrator** and run:
 
    ```powershell
-   New-NetFirewallRule -DisplayName "MSFS SimConnect 500" -Direction Inbound -Protocol TCP -LocalPort 500 -Action Allow -Profile Private
+   New-NetFirewallRule -DisplayName "MSFS SimConnect 502" -Direction Inbound -Protocol TCP -LocalPort 502 -Action Allow -Profile Private
    ```
 
    Your network must be set to *Private* (Settings → Network & Internet → properties of the connection).
-5. Start MSFS, then set **Sim host** / **Port** in the plugin to the sim PC's IP and `500`.
+5. Start MSFS, then set **Sim host** / **Port** in the plugin to the sim PC's IP and `502`.
 
-To undo: restore the backup of `SimConnect.xml` and run `Remove-NetFirewallRule -DisplayName "MSFS SimConnect 500"`.
+To undo: restore the backup of `SimConnect.xml` and run `Remove-NetFirewallRule -DisplayName "MSFS SimConnect 502"`.
 
 ## Troubleshooting
 
@@ -102,7 +102,7 @@ make package    # → com.robertw.fs24.streamDeckPlugin
 SimConnect smoke test against a remote sim:
 
 ```bash
-FS24_HOST=<sim-pc-ip> FS24_PORT=500 npx tsx scripts/smoke-simconnect.ts
+FS24_HOST=<sim-pc-ip> FS24_PORT=502 npx tsx scripts/smoke-simconnect.ts
 ```
 
 Options are documented at the top of `scripts/smoke-simconnect.ts`. Every push to `main` and every PR is built by GitHub Actions (`.github/workflows/build.yml`); the packaged plugin is attached to the run as an artifact.
