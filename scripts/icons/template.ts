@@ -809,22 +809,23 @@ export function renderActionGlyph(name: string): string {
 // connection" across the whole deck without per-button context.
 const OFFLINE_BG = "#1a1a1a";
 const OFFLINE_BORDER = "#7f1d1d";
-const OFFLINE_SIM_COLOR = "#94a3b8";
-const OFFLINE_TEXT_COLOR = "#ef4444";
+const OFFLINE_BAND = "#dc2626";
 
+// A user-set Stream Deck title always overrides setTitle(), so the label sits
+// in a bottom band and leaves the centre (default title position) free.
 export function renderSimOfflineIcon(): string {
 	const borderInset = 4;
 	const borderSize = SIZE - borderInset * 2;
+	const bandHeight = 30;
+	const bandY = SIZE - borderInset - bandHeight;
 	return `<svg xmlns="http://www.w3.org/2000/svg" width="${SIZE}" height="${SIZE}" viewBox="0 0 ${SIZE} ${SIZE}">
   <rect width="${SIZE}" height="${SIZE}" fill="${OFFLINE_BG}"/>
+  <rect x="${borderInset}" y="${bandY}" width="${borderSize}" height="${bandHeight}" fill="${OFFLINE_BAND}"/>
   <rect x="${borderInset}" y="${borderInset}" width="${borderSize}" height="${borderSize}"
         fill="none" stroke="${OFFLINE_BORDER}" stroke-width="3" rx="6"/>
-  <text x="${SIZE / 2}" y="58" text-anchor="middle"
-        font-family="${FONT_STACK}" font-size="22" font-weight="700"
-        fill="${OFFLINE_SIM_COLOR}" letter-spacing="3">SIM</text>
-  <text x="${SIZE / 2}" y="100" text-anchor="middle"
-        font-family="${FONT_STACK}" font-size="26" font-weight="800"
-        fill="${OFFLINE_TEXT_COLOR}" letter-spacing="2">OFFLINE</text>
+  <text x="${SIZE / 2}" y="${bandY + 21}" text-anchor="middle"
+        font-family="${FONT_STACK}" font-size="16" font-weight="800"
+        fill="#ffffff" letter-spacing="1.5">SIM OFFLINE</text>
 </svg>`;
 }
 

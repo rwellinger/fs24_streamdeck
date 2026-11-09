@@ -37,7 +37,7 @@ Sibling project: `~/Workspace/x-plane/xp_streamdeck` (X-Plane 12). Sim-agnostic 
 **No Node, Visual Studio, MSFS SDK or any dev tool gets installed on the sim PC.** The only allowed changes there: SimConnect remote-access config (`SimConnect.xml`) plus a firewall rule, and installing the release artefacts.
 
 MS Store paths:
-- `SimConnect.xml`: `%LOCALAPPDATA%\Packages\Microsoft.Limitless_8wekyb3d8bbwe\LocalCache\SimConnect.xml` (verified M01). Ships with a pipe, IPv4 `500` and IPv6 `501` entry (local scope). Remote dev access = additional global IPv4 entry on `502`. A plugin on the sim PC connects locally with no config (node-simconnect autodetect).
+- `SimConnect.xml`: `%LOCALAPPDATA%\Packages\Microsoft.Limitless_8wekyb3d8bbwe\LocalCache\SimConnect.xml` (verified M01). Ships with a pipe, IPv4 `500` and IPv6 `501` entry (local scope). Remote dev access = additional global IPv4 entry on `503`. A plugin on the sim PC connects locally with no config (node-simconnect autodetect).
 - `UserCfg.opt` (holds `InstalledPackagesPath`, → Community folder): `%LOCALAPPDATA%\Packages\Microsoft.Limitless_8wekyb3d8bbwe\LocalCache\UserCfg.opt` (not yet verified — needed in M03)
 
 ### MSFS SDK licensing
