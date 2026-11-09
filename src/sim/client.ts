@@ -16,6 +16,9 @@ import {
 	SimConnectConstants,
 } from "node-simconnect";
 
+import { describeVar, type VarPath } from "./path";
+import { type VarConnection, type VarListener, VarRegistry } from "./vars";
+
 export type SimTarget = { host: string; port: number } | null;
 
 type Logger = {
@@ -29,6 +32,7 @@ type ClientEvents = {
 	offline: [];
 	connected: [appName: string];
 	disconnected: [];
+	aircraftChanged: [];
 };
 
 const APP_NAME = "fs24_streamdeck";
@@ -42,11 +46,18 @@ const OFFLINE_DELAY_MS = 3000;
 const BARRIER_TIMEOUT_MS = 2000;
 // NotificationPriority.HIGHEST — const enum in node-simconnect's typings.
 const PRIORITY_HIGHEST = 1;
+// Fixed client event IDs for system events; K:-event IDs start above them.
+const SYSTEM_EVENT_AIRCRAFT_LOADED = 1;
+const SYSTEM_EVENT_SIM_START = 2;
+const FIRST_K_EVENT_ID = 100;
+// AircraftLoaded and SimStart arrive together on a flight load.
+const AIRCRAFT_REFRESH_DEBOUNCE_MS = 500;
 
 /**
- * Thin SimConnect wrapper: owns one connection, reconnects with backoff, maps
- * K:-event names lazily. All SimConnect IDs are connection-scoped, so every
- * cache is dropped on disconnect.
+ * SimConnect wrapper: owns one connection, reconnects with backoff, maps
+ * K:-event names lazily and multiplexes A:/L:/B: subscriptions (VarRegistry).
+ * All SimConnect IDs are connection-scoped, so every cache is dropped on
+ * disconnect and subscriptions are re-registered on the next connect.
  */
 export class SimClient extends EventEmitter<ClientEvents> {
 	private handle: ConnectionHandle | null = null;
@@ -60,13 +71,31 @@ export class SimClient extends EventEmitter<ClientEvents> {
 	private offlineEmitted = false;
 
 	private eventIds = new Map<string, number>();
-	private nextEventId = 1;
+	private nextEventId = FIRST_K_EVENT_ID;
 	private nextRequestId = 1;
 	private readonly pendingBarriers = new Map<number, () => void>();
-	private readonly pendingMappings = new Map<number, (err: Error) => void>();
+	private readonly sendErrors = new Map<number, (err: Error) => void>();
+	private aircraftTimer: NodeJS.Timeout | null = null;
+	private readonly vars: VarRegistry;
 
 	constructor(private readonly logger: Logger) {
 		super();
+		this.vars = new VarRegistry(logger);
+	}
+
+	/** Subscribe to a var; returns the unsubscribe function. */
+	subscribe(path: VarPath, listener: VarListener): () => void {
+		return this.vars.subscribe(path, listener);
+	}
+
+	/** Last known value; `undefined` = no data yet, `null` = unresolvable. */
+	peek(path: VarPath): number | null | undefined {
+		return this.vars.peek(path);
+	}
+
+	async write(path: VarPath, value: number): Promise<void> {
+		await this.vars.write(path, value);
+		this.logger.info(`write ${describeVar(path)} = ${value}`);
 	}
 
 	connect(): void {
@@ -119,16 +148,10 @@ export class SimClient extends EventEmitter<ClientEvents> {
 
 	private async mapEvent(handle: ConnectionHandle, eventName: string): Promise<number> {
 		const id = this.nextEventId++;
-		let sendId = -1;
 		const failed = new Promise<never>((_, reject) => {
-			sendId = handle.mapClientEventToSimEvent(id, eventName);
-			this.pendingMappings.set(sendId, reject);
+			this.sendErrors.set(handle.mapClientEventToSimEvent(id, eventName), reject);
 		});
-		try {
-			await Promise.race([failed, this.barrier(handle)]);
-		} finally {
-			this.pendingMappings.delete(sendId);
-		}
+		await Promise.race([failed, this.barrier(handle)]);
 		if (this.handle !== handle) throw new Error("disconnected");
 		this.eventIds.set(eventName, id);
 		return id;
@@ -202,15 +225,33 @@ export class SimClient extends EventEmitter<ClientEvents> {
 			this.pendingBarriers.get(state.requestID)?.();
 			this.pendingBarriers.delete(state.requestID);
 		});
+		handle.on("eventFilename", (ev) => {
+			if (ev.clientEventId === SYSTEM_EVENT_AIRCRAFT_LOADED) {
+				this.logger.info(`aircraft loaded: ${ev.fileName}`);
+				this.scheduleAircraftRefresh();
+			}
+		});
+		handle.on("event", (ev) => {
+			if (ev.clientEventId === SYSTEM_EVENT_SIM_START) this.scheduleAircraftRefresh();
+		});
+		handle.subscribeToSystemEvent(SYSTEM_EVENT_AIRCRAFT_LOADED, "AircraftLoaded");
+		handle.subscribeToSystemEvent(SYSTEM_EVENT_SIM_START, "SimStart");
+
+		const conn: VarConnection = {
+			handle,
+			onSendError: (sendId, onError) => this.sendErrors.set(sendId, onError),
+			barrier: () => this.barrier(handle),
+		};
+		this.vars.attach(conn);
 		handle.on("quit", () => this.onLost(handle, "sim quit"));
 		handle.on("close", () => this.onLost(handle, "socket closed"));
 		handle.on("error", (err) => this.onLost(handle, errText(err)));
 	}
 
 	private onException(ex: RecvException): void {
-		const reject = this.pendingMappings.get(ex.sendId);
+		const reject = this.sendErrors.get(ex.sendId);
 		if (reject) {
-			this.pendingMappings.delete(ex.sendId);
+			this.sendErrors.delete(ex.sendId);
 			reject(new Error(`SimConnect exception ${ex.exceptionName} (${ex.exception})`));
 			return;
 		}
@@ -237,10 +278,16 @@ export class SimClient extends EventEmitter<ClientEvents> {
 		const handle = this.handle;
 		this.handle = null;
 		this.eventIds = new Map();
-		this.nextEventId = 1;
+		this.nextEventId = FIRST_K_EVENT_ID;
 		this.pendingBarriers.clear();
-		for (const reject of this.pendingMappings.values()) reject(new Error("disconnected"));
-		this.pendingMappings.clear();
+		const errors = [...this.sendErrors.values()];
+		this.sendErrors.clear();
+		for (const reject of errors) reject(new Error("disconnected"));
+		if (this.aircraftTimer) {
+			clearTimeout(this.aircraftTimer);
+			this.aircraftTimer = null;
+		}
+		this.vars.detach();
 		if (handle) {
 			handle.removeAllListeners("close");
 			handle.removeAllListeners("quit");
@@ -248,6 +295,15 @@ export class SimClient extends EventEmitter<ClientEvents> {
 			handle.close();
 		}
 		this.scheduleOffline();
+	}
+
+	private scheduleAircraftRefresh(): void {
+		if (this.aircraftTimer) clearTimeout(this.aircraftTimer);
+		this.aircraftTimer = setTimeout(() => {
+			this.aircraftTimer = null;
+			this.vars.refreshForAircraft();
+			this.emit("aircraftChanged");
+		}, AIRCRAFT_REFRESH_DEBOUNCE_MS);
 	}
 
 	private scheduleReconnect(): void {
