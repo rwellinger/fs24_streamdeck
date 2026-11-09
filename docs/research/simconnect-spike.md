@@ -35,7 +35,7 @@ Findings from bringing up the walking skeleton against MSFS 2024 (MS Store). Par
 | Empty event name in PI | ⚠️ UX | placeholder looked like a value → user pressed with empty setting; placeholders changed to `e.g. …` |
 | Remote connect Mac → sim PC (port 503) | open | not working yet; next step `nc -vz <ip> 503` |
 | Smoke script steps 2–7 (A: read, subscribe, L:, unknown K:, B: input events, quit behaviour) | open | needs remote connect |
-| Offline tile on MSFS quit + auto-recovery | open | |
+| Offline tile on MSFS quit + auto-recovery | ✅ | tile appears after quit; after MSFS restart the button works again without restarting Stream Deck. A user-set title overlaps the tile (Stream Deck rule) → tile redesigned as bottom band |
 
 ## Conclusions so far
 
