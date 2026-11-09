@@ -6,7 +6,7 @@ SDPLUGIN_DIR := $(PLUGIN_UUID).sdPlugin
 MAIN_BRANCH  := main
 STREAMDECK   := npx --no-install streamdeck
 
-.PHONY: help setup build deploy clean distclean test lint lint-fix format format-check check icons package cleanup_branches
+.PHONY: help setup build deploy clean distclean test lint lint-fix format format-check check icons package gh-build cleanup_branches
 
 help: ## Show available targets
 	@awk 'BEGIN {FS = ":.*## "; printf "Available targets:\n"} \
@@ -51,6 +51,16 @@ icons: ## Generate button icons from scripts/icons/catalog.ts into out/icons/
 
 package: build ## Build a distributable .streamDeckPlugin
 	$(STREAMDECK) pack -f $(SDPLUGIN_DIR)
+
+gh-build: ## Run the GitHub build (manual workflow) on origin/main, wait, print the artifact link
+	@test -z "$$(git status --porcelain)" || { echo "Uncommitted changes — commit first."; exit 1; }
+	@git fetch -q origin $(MAIN_BRANCH)
+	@test "$$(git rev-parse HEAD)" = "$$(git rev-parse origin/$(MAIN_BRANCH))" || { echo "Local HEAD differs from origin/$(MAIN_BRANCH) — push first."; exit 1; }
+	gh workflow run build.yml --ref $(MAIN_BRANCH)
+	@sleep 5
+	@id=$$(gh run list --workflow build.yml --limit 1 --json databaseId -q '.[0].databaseId'); \
+		gh run watch $$id --exit-status && \
+		echo "Artifact: $$(gh run view $$id --json url -q .url) → Artifacts"
 
 cleanup_branches: ## Delete local branches already merged into main
 	git fetch --prune origin

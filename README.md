@@ -141,7 +141,7 @@ FS24_HOST=<sim-pc-ip> FS24_PORT=502 npx tsx scripts/smoke-simconnect.ts
 
 Options are documented at the top of `scripts/smoke-simconnect.ts`.
 
-Release builds run on GitHub Actions (`.github/workflows/build.yml`), **manually only**: GitHub → Actions → *build* → *Run workflow*, or `gh workflow run build.yml`. The packaged plugin is attached to the run as an artifact.
+Release builds run on GitHub Actions (`.github/workflows/build.yml`), **manually only**: `make gh-build` (checks that your local state is pushed, runs the build, waits and prints the link) — or GitHub → Actions → *build* → *Run workflow*. The packaged plugin is attached to the run as an artifact.
 
 ## License
 
