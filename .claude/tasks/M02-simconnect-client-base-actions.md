@@ -49,11 +49,11 @@ H:-events, RPN, H145-specific actions (M03/M04), profiles per aircraft (M05).
 
 ## Acceptance criteria
 
-- [ ] Cabri G2: strobe / nav light toggle shows live state and switches (the Cabri has no beacon); IAS/altitude display updates smoothly.
-- [ ] DA42: AP HDG mode toggle + heading bug nudge (K:-events) work; bug value display updates.
+- [x] Cabri G2: strobe / nav light toggle shows live state and switches (the Cabri has no beacon); IAS/altitude display updates smoothly.
+- [x] ~~DA42: AP HDG mode toggle + heading bug nudge~~ → replaced (agreed 2026-11-09): Cabri altimeter nudge `KOHLSMAN_INC`/`KOHLSMAN_DEC` with auto-repeat + `A:KOHLSMAN SETTING MB:1, millibars` display.
 - [ ] Aircraft change without restarting Stream Deck: buttons re-bind, no stale values.
 - [ ] MSFS restart: all buttons recover (offline tile → live).
-- [ ] `make check` green.
+- [x] `make check` green.
 
 ## Verification
 
