@@ -51,6 +51,8 @@ Event fields take `K:-event [value]`, e.g. `STROBES_TOGGLE` or `MAGNETO1_SET 3`.
 
 Under each field the property inspector shows the live value, or why it can't be read. Unknown `A:`/`B:` names show `not found`. Unknown `L:` vars read as `0` — MSFS doesn't report them.
 
+Note: `A:` SimVars exist for every aircraft. A helicopter var such as `A:ROTOR GOV ACTIVE:1` returns some default value in an airplane instead of `?`, so build profiles per aircraft. `B:` input events belong to the aircraft and show `?` in any other aircraft.
+
 ### Variable Toggle
 
 Two-state key. The image follows the **state variable** (ON if the value is closer to *Value ON* than to *Value OFF*). A press either writes ON/OFF to a variable, fires one K:-event (`STROBES_TOGGLE`), or fires separate ON/OFF events (`MAGNETO1_SET 3` / `MAGNETO1_SET 0`). *Hold mode* makes it momentary. Orientation, color and a label are drawn by the plugin.
