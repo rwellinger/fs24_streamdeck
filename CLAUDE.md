@@ -52,7 +52,7 @@ SDK headers/libs must **never** be committed (`/sdk/` is gitignored). The repo i
 | `K:` event | – | trigger (+ value) | SimConnect `MapClientEventToSimEvent`. Pause events (`PAUSE_TOGGLE`/`PAUSE_SET`) have no effect in 2024 from an external client → test via WASM RPN in M03 |
 | `L:` var | yes | yes | SimConnect data definition with `L:` prefix |
 | `L:1:` scoped var (2024-native aircraft) | flaky | flaky | known SimConnect issues — avoid, fall back to WASM |
-| `B:` input event | yes | yes | SimConnect InputEvent API (verify in M01) |
+| `B:` input event | yes | yes | SimConnect InputEvent API — verified (enumerate/get/set); enumeration contains duplicates, dedupe by hash |
 | `H:` event | – | trigger | **WASM bridge only** |
 | RPN calculator code | – | execute | **WASM bridge only** |
 

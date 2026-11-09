@@ -1,6 +1,6 @@
 # SimConnect spike (M01)
 
-Findings from bringing up the walking skeleton against MSFS 2024 (MS Store). Partly from the plugin running **locally on the sim PC**, partly still open (remote smoke script).
+Findings from bringing up the walking skeleton against MSFS 2024 (MS Store). From the plugin running **locally on the sim PC** and the smoke script run **remotely from the Mac** (port 502, Cabri G2 loaded).
 
 ## Setup
 
@@ -34,7 +34,13 @@ Findings from bringing up the walking skeleton against MSFS 2024 (MS Store). Par
 | `K:PAUSE_SET` 1/0 | ❌ no effect | same; community reports confirm pause events from external SimConnect clients don't work in 2024 — reportedly `1 (>K:PAUSE_SET)` works as RPN inside the sim → test via WASM bridge in M03 |
 | Empty event name in PI | ⚠️ UX | placeholder looked like a value → user pressed with empty setting; placeholders changed to `e.g. …` |
 | Remote connect Mac → sim PC (port 502) | ✅ | handshake OK (`SunRise 12.2`). MSFS listens on `0.0.0.0:502`; pitfall during setup: we tested port 503 while the XML entry is on 502 — `netstat -an \| findstr ":50"` on the sim PC shows what MSFS really listens on |
-| Smoke script steps 2–7 (A: read, subscribe, L:, unknown K:, B: input events, quit behaviour) | open | needs remote connect |
+| A: read once (`PLANE ALTITUDE, feet`, `LIGHT BEACON, Bool`) | ✅ | remote, ~60 ms round trip |
+| A: subscribe `LIGHT STROBE` (SIM_FRAME + CHANGED) | ✅ | 21 updates for 20 flips, one per change, latency not noticeable |
+| L: read with `L:` prefix | ⚠️ inconclusive | Cabri has no H145 vars → `0`, **no exception**: unknown L:-vars read as 0 (cannot detect typos). Re-test with H145 for a real value |
+| Unknown K:-event name | ✅ rejected | `NAME_UNRECOGNIZED (7)` on `MapClientEventToSimEvent` → plugin's alert-on-typo works |
+| B: enumerate input events | ✅ | Cabri: 106 entries, **with duplicates** (same names/hashes repeated) → dedupe by hash |
+| B: get / set / read back `FUEL_PUMP` | ✅ | 1 → set 0 → read 0 → set 1 → read 1; AAO's `IE:` names = SimConnect input event names |
+| MSFS quit while connected (step 7b) | open | not run yet |
 | Offline tile on MSFS quit + auto-recovery | ✅ | tile appears after quit; after MSFS restart the button works again without restarting Stream Deck. A user-set title overlaps the tile (Stream Deck rule) → tile redesigned as bottom band |
 
 ## Conclusions so far
@@ -42,4 +48,5 @@ Findings from bringing up the walking skeleton against MSFS 2024 (MS Store). Par
 - The core chain Stream Deck → plugin → SimConnect → MSFS 2024 works with plain node-simconnect, no external app.
 - End users need **no** `SimConnect.xml` change; remote config is a dev-only concern.
 - Pause can't be driven from an external SimConnect client in 2024 → candidate for the WASM bridge (RPN).
-- Open: does MSFS raise an exception for unknown K:-event names? The plugin's alert-on-typo relies on it (smoke step 5b).
+- Unknown K:-names are rejected (`NAME_UNRECOGNIZED`), unknown L:-vars are not (read as 0).
+- B:-input events work over plain SimConnect (enumerate, get, set) → in scope for M02; no WASM needed for them.
