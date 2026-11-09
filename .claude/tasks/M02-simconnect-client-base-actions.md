@@ -10,8 +10,8 @@ M01 done; read `docs/research/simconnect-spike.md` first — its findings overri
 
 ### Carried over from M01 (do first)
 
-- **Remote dev loop:** Mac → sim PC on port `503` doesn't connect yet (entry + firewall rule exist). Start with `nc -vz <sim-pc-ip> 503`, then fix SimConnect.xml / firewall / network profile.
-- **Smoke script** (`scripts/smoke-simconnect.ts`) against the live sim, Cabri loaded: `FS24_PORT=503 FS24_WATCH_VAR="LIGHT STROBE" FS24_BEVENT=FUEL_PUMP FS24_BEVENT_VALUE=1 FS24_QUIT_WATCH_S=120`; L:-var step again with the H145. Fill the open rows in the spike doc. Step 6 decides whether B:-events are in scope below; step 5b decides whether unknown K:-names can be detected.
+- **Remote dev loop:** Mac → sim PC on port `502` doesn't connect yet (entry + firewall rule exist). Start with `nc -vz <sim-pc-ip> 502`, then fix SimConnect.xml / firewall / network profile.
+- **Smoke script** (`scripts/smoke-simconnect.ts`) against the live sim, Cabri loaded: `FS24_PORT=502 FS24_WATCH_VAR="LIGHT STROBE" FS24_BEVENT=FUEL_PUMP FS24_BEVENT_VALUE=1 FS24_QUIT_WATCH_S=120`; L:-var step again with the H145. Fill the open rows in the spike doc. Step 6 decides whether B:-events are in scope below; step 5b decides whether unknown K:-names can be detected.
 - **Offline tile:** a user-set Stream Deck title always overrides `setTitle()`, so it overlaps "SIM OFFLINE". Redesign `renderSimOfflineIcon()` as a top/bottom band that leaves the centre free for the title.
 
 ## Scope

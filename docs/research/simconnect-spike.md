@@ -19,7 +19,7 @@ Findings from bringing up the walking skeleton against MSFS 2024 (MS Store). Par
 |---|---|
 | `SimConnect.xml` | `%LOCALAPPDATA%\Packages\Microsoft.Limitless_8wekyb3d8bbwe\LocalCache\SimConnect.xml` — exists |
 | Default entries | named pipe, IPv4 port `500` (local scope), IPv6 port `501` |
-| Remote dev entry | added: IPv4, global scope, LAN IP, port `503` + firewall rule (private profile) |
+| Remote dev entry | added: IPv4, global scope, LAN IP, port `502` + firewall rule (private profile) |
 | Local connect (plugin on sim PC, host empty) | **works** — node-simconnect autodetect, no config needed |
 | `UserCfg.opt` | not yet verified (needed in M03) |
 
@@ -33,7 +33,7 @@ Findings from bringing up the walking skeleton against MSFS 2024 (MS Store). Par
 | `K:PAUSE_TOGGLE` | ❌ no effect | sent without SimConnect exception, sim does not pause |
 | `K:PAUSE_SET` 1/0 | ❌ no effect | same; community reports confirm pause events from external SimConnect clients don't work in 2024 — reportedly `1 (>K:PAUSE_SET)` works as RPN inside the sim → test via WASM bridge in M03 |
 | Empty event name in PI | ⚠️ UX | placeholder looked like a value → user pressed with empty setting; placeholders changed to `e.g. …` |
-| Remote connect Mac → sim PC (port 503) | open | not working yet; next step `nc -vz <ip> 503` |
+| Remote connect Mac → sim PC (port 502) | ✅ | handshake OK (`SunRise 12.2`). MSFS listens on `0.0.0.0:502`; pitfall during setup: Mac had a second interface (Wi-Fi) and the firewall rule was created for the wrong port — `netstat -an \| findstr ":50"` on the sim PC shows what MSFS really listens on |
 | Smoke script steps 2–7 (A: read, subscribe, L:, unknown K:, B: input events, quit behaviour) | open | needs remote connect |
 | Offline tile on MSFS quit + auto-recovery | ✅ | tile appears after quit; after MSFS restart the button works again without restarting Stream Deck. A user-set title overlaps the tile (Stream Deck rule) → tile redesigned as bottom band |
 
