@@ -61,7 +61,7 @@ Two ClientData areas, both created by the bridge at `module_init`. All little-en
 | `H:` via `fsEventsHEventCall` | ❌ always `FS_EVENTS_ERROR_FAIL`, no effect (H145) |
 | `(>H:…)` via RPN (plugin `H:NAME`) | ✅ H145 `H145_SDK_OH_PITOT_1_ON/OFF` → `L:H145_SDK_OH_PITOT_1` 0 → 1 → 0 within 0.25–1 s |
 | AAO toggle script via `RPN:` | ✅ toggles both ways |
-| Idle FPS with the bridge loaded (dev-mode FPS counter, H145) | ✅ 60.0 fps / 16.67 ms, all green — capped at 60 (VSync/limit), so it shows no headroom loss, not the absolute cost; the bridge has no per-frame code (ClientData `ON_SET` only) |
+| Idle FPS with the bridge loaded (dev-mode FPS counter, H145) | ✅ 60.0 fps / 16.67 ms, all green — capped at 60 (VSync/limit), so it shows no headroom loss, not the absolute cost; the bridge has no per-frame code (ClientData `ON_SET` only). WASM Debug, all callbacks of the module: min 0.0009 ms, max 0.028 ms, avg (last 10) 0.010 ms ≈ 0.06 % of a 16.67 ms frame |
 | Plugin `SimClient.fire()` K / H / RPN, three concurrent RPN | ✅ serialised, 33 / 67 / 100 ms |
 | RPN read `(A:PLANE ALTITUDE, feet)` | ✅ value returned, 33 ms |
 | RPN write `(>K:TOGGLE_NAV_LIGHTS)` | ✅ `(A:LIGHT NAV, Bool)` 0 → 1 → 0 |
