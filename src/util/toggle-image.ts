@@ -8,7 +8,7 @@
 
 // Runtime renderer for the toggle tile — a sliding on/off switch with an
 // optional baked-in static label. dataref-toggle renders this whenever the user
-// picks a non-default orientation/color or sets a Static Label, pushing it over
+// picks vertical (the default), a color or a Static Label, pushing it over
 // the manifest state image via setImage(). Baking (rather than a title overlay)
 // keeps the label pinned regardless of state; offering orientation + color here
 // means the user gets visual variety without uploading custom images (an

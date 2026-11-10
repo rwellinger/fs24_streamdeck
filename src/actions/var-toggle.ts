@@ -85,7 +85,7 @@ export class VarToggle extends VarAction<VarToggleSettings, State> {
 			strictOnMatch: false,
 			staticLabel: "",
 			staticLabelPosition: "top",
-			orientation: "horizontal",
+			orientation: "vertical",
 			bodyColor: "gray",
 			invert: false,
 			inflight: false,
@@ -102,7 +102,7 @@ export class VarToggle extends VarAction<VarToggleSettings, State> {
 		state.strictOnMatch = s.strictOnMatch === true;
 		state.staticLabel = trimString(s.staticLabel);
 		state.staticLabelPosition = s.staticLabelPosition === "bottom" ? "bottom" : "top";
-		state.orientation = s.orientation === "vertical" ? "vertical" : "horizontal";
+		state.orientation = s.orientation === "horizontal" ? "horizontal" : "vertical";
 		state.bodyColor = parseBodyColor(s.bodyColor);
 		state.invert = s.invert === true;
 	}
