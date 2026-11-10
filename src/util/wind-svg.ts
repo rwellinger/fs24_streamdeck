@@ -27,6 +27,10 @@ export interface WindRenderInput {
 	// "to" = arrow points where the wind is going (PFD convention).
 	// "from" = arrow points at the source of the wind (weather chart).
 	arrowConvention?: "from" | "to";
+	/** Arrow rotation offset, e.g. the heading for a heading-up rose. */
+	rotationOffsetDeg?: number;
+	/** Prefix the speed with the direction as `DDD/` (aviation notation). */
+	showDirection?: boolean;
 }
 
 export function renderWindSvg(input: WindRenderInput): string {
@@ -38,17 +42,24 @@ export function renderWindSvg(input: WindRenderInput): string {
 	const convention = input.arrowConvention ?? "to";
 
 	const dirValid = dir !== undefined && Number.isFinite(dir);
-	// X-Plane wind_heading is "where the wind comes from". For the PFD-style
+	// AMBIENT WIND DIRECTION is "where the wind comes from". For the PFD-style
 	// "to"-arrow we rotate by +180°.
-	const arrowDeg = dirValid ? (convention === "to" ? (dir as number) + 180 : (dir as number)) : 0;
+	const arrowDeg = dirValid
+		? (convention === "to" ? (dir as number) + 180 : (dir as number)) -
+			(input.rotationOffsetDeg ?? 0)
+		: 0;
 
 	const cx = SIZE / 2;
 	const cy = 80;
 	const shaftHalf = 30;
 	const headHalf = 14;
 
-	const speedText =
-		speed !== undefined && Number.isFinite(speed) ? `${Math.round(speed)} ${speedUnit}` : "—";
+	const speedValid = speed !== undefined && Number.isFinite(speed);
+	const speedText = !speedValid
+		? "—"
+		: input.showDirection && dirValid
+			? `${String(Math.round(dir as number) % 360).padStart(3, "0")}/${Math.round(speed as number)}`
+			: `${Math.round(speed as number)} ${speedUnit}`;
 
 	const oatText = oat !== undefined && Number.isFinite(oat) ? formatOat(oat) : null;
 

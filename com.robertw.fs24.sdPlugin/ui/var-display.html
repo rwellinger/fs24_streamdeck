@@ -49,6 +49,25 @@
 			<sdpi-textfield setting="zeroThreshold" placeholder="0.5"></sdpi-textfield>
 		</sdpi-item>
 
+		<sdpi-item label="Press">
+			<sdpi-textfield setting="pressAction" id="pressField" placeholder="optional: K:EVENT, H:NAME, RPN:code"></sdpi-textfield>
+		</sdpi-item>
+		<sdpi-item label="">
+			<span class="live" id="pressFieldLive"></span>
+		</sdpi-item>
+		<sdpi-item label="Long press">
+			<sdpi-textfield setting="longPressAction" id="longField" placeholder="optional, fired when held ≥ 500 ms"></sdpi-textfield>
+		</sdpi-item>
+		<sdpi-item label="">
+			<span class="live" id="longFieldLive"></span>
+		</sdpi-item>
+		<sdpi-item label="Auto-Repeat">
+			<sdpi-checkbox setting="autoRepeat" label="Repeat at 5 Hz while held (off when a long press is set)"></sdpi-checkbox>
+		</sdpi-item>
+		<sdpi-item label="Feedback">
+			<sdpi-checkbox setting="hideConfirmation" label="Hide green confirmation icon on success"></sdpi-checkbox>
+		</sdpi-item>
+
 		<details>
 			<summary>SimConnect connection (all buttons)</summary>
 			<sdpi-item label="Sim host">
@@ -61,6 +80,8 @@
 		<script>
 			SimPI.attachBridgeInstaller();
 			SimPI.attachProbe("varField", "varFieldLive");
+			SimPI.attachProbe("pressField", "pressFieldLive", "event");
+			SimPI.attachProbe("longField", "longFieldLive", "event");
 		</script>
 	</body>
 </html>

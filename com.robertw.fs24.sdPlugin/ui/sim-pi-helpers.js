@@ -49,7 +49,8 @@
 	 * @param previewId id of the element that shows the result
 	 * @param kind "var" (A:/L:/B: — polls the live value), "event" (K:/H:/RPN:
 	 *             press action; H:/RPN: also report the WASM bridge) or "kevent"
-	 *             (K:-event name only)
+	 *             (K:-event name only) or "rules" (var-state rule list in an
+	 *             sdpi-textarea — polls which rule matches)
 	 */
 	const attachProbe = async (fieldId, previewId, kind = "var") => {
 		const field = document.getElementById(fieldId);
@@ -57,7 +58,7 @@
 		if (!field || !preview) return;
 		ensureSubscribed();
 		previews.set(fieldId, preview);
-		const inner = await waitForInner(field);
+		const inner = await waitForInner(field, kind === "rules" ? "textarea" : "input");
 		if (!inner) return;
 
 		let timer = null;
@@ -77,7 +78,7 @@
 			debounce = setTimeout(() => {
 				if (timer) clearInterval(timer);
 				send();
-				if (kind === "var") timer = setInterval(send, REFRESH_MS);
+				if (kind === "var" || kind === "rules") timer = setInterval(send, REFRESH_MS);
 			}, DEBOUNCE_MS);
 		};
 		inner.addEventListener("input", restart);

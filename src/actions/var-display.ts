@@ -6,25 +6,33 @@
  * See the LICENSE file in the project root for full license text.
  */
 
-import { action, type KeyAction } from "@elgato/streamdeck";
+import streamDeck, {
+	action,
+	type KeyAction,
+	type KeyDownEvent,
+	type KeyUpEvent,
+	type WillDisappearEvent,
+} from "@elgato/streamdeck";
 import type { JsonObject } from "@elgato/utils";
 
 import type { SimClient } from "../sim";
 import { toFiniteNumber } from "../util/coerce";
 import { combineTitle } from "../util/error-tile";
 import { formatSimValue } from "../util/format";
+import { PressController, type PressSettings, parsePressSettings } from "../util/press";
 import { normalizeFormat, resolveZeroSnap, trimString } from "../util/settings";
 import { STATE_DIRTY, VarAction, type VarState } from "./base/var-action";
 
-type VarDisplaySettings = JsonObject & {
-	varPath?: string;
-	label?: string;
-	format?: string;
-	unitScale?: string | number;
-	precision?: string | number;
-	snapZero?: boolean;
-	zeroThreshold?: string | number;
-};
+type VarDisplaySettings = JsonObject &
+	PressSettings & {
+		varPath?: string;
+		label?: string;
+		format?: string;
+		unitScale?: string | number;
+		precision?: string | number;
+		snapZero?: boolean;
+		zeroThreshold?: string | number;
+	};
 
 interface State extends VarState<VarDisplaySettings> {
 	format: string;
@@ -36,8 +44,33 @@ interface State extends VarState<VarDisplaySettings> {
 
 @action({ UUID: "com.robertw.fs24.var-display" })
 export class VarDisplay extends VarAction<VarDisplaySettings, State> {
+	private readonly press: PressController<VarDisplaySettings>;
+
 	constructor(sim: SimClient) {
 		super(sim, "var-display");
+		this.press = new PressController(sim, "var-display");
+		sim.on("offline", () => this.press.cancelAll());
+	}
+
+	override onWillDisappear(ev: WillDisappearEvent<VarDisplaySettings>): Promise<void> {
+		this.press.cancel(ev.action.id);
+		return super.onWillDisappear(ev);
+	}
+
+	/** Display-only unless a press action is set — then a press fires it. */
+	override async onKeyDown(ev: KeyDownEvent<VarDisplaySettings>): Promise<void> {
+		const config = parsePressSettings(ev.payload.settings ?? {});
+		if (!config) return;
+		if (!config.ok) {
+			streamDeck.logger.warn(`var-display: ${config.error}`);
+			await ev.action.showAlert();
+			return;
+		}
+		await this.press.down(ev.action, config.path);
+	}
+
+	override async onKeyUp(ev: KeyUpEvent<VarDisplaySettings>): Promise<void> {
+		await this.press.up(ev.action);
 	}
 
 	protected override createState(a: KeyAction<VarDisplaySettings>, s: VarDisplaySettings): State {

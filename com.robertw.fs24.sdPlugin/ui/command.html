@@ -30,8 +30,14 @@
 		<sdpi-item label="Value">
 			<sdpi-textfield setting="eventValue" placeholder="K: only, optional, default 0" pattern="-?[0-9]*"></sdpi-textfield>
 		</sdpi-item>
+		<sdpi-item label="Long press">
+			<sdpi-textfield setting="longEventName" id="longField" placeholder="optional, fired when held ≥ 500 ms"></sdpi-textfield>
+		</sdpi-item>
+		<sdpi-item label="">
+			<span class="live" id="longFieldLive"></span>
+		</sdpi-item>
 		<sdpi-item label="Auto-Repeat">
-			<sdpi-checkbox setting="autoRepeat" label="Repeat at 5 Hz while held (after 500 ms)"></sdpi-checkbox>
+			<sdpi-checkbox setting="autoRepeat" label="Repeat at 5 Hz while held (after 500 ms; off when a long press is set)"></sdpi-checkbox>
 		</sdpi-item>
 		<sdpi-item label="Feedback">
 			<sdpi-checkbox setting="hideConfirmation" label="Hide green confirmation icon on success"></sdpi-checkbox>
@@ -49,6 +55,7 @@
 		<script>
 			SimPI.attachBridgeInstaller();
 			SimPI.attachProbe("eventField", "eventFieldLive", "event");
+			SimPI.attachProbe("longField", "longFieldLive", "event");
 		</script>
 	</body>
 </html>

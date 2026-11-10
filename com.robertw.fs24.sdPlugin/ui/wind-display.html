@@ -1,0 +1,73 @@
+<!doctype html>
+<!--
+  fs24_streamdeck - Stream Deck plugin for MSFS 2024
+  Copyright (c) 2026 thWelly
+
+  Licensed under the MIT License.
+  See the LICENSE file in the project root for full license text.
+-->
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>MSFS Wind Display</title>
+		<script src="https://sdpi-components.dev/releases/v4/sdpi-components.js"></script>
+		<script src="sim-pi-helpers.js"></script>
+		<style>
+			.live { font-family: monospace; font-size: 11px; color: #9a9; word-break: break-all; }
+			.live[data-state="not-found"], .live[data-state="error"] { color: #d97; }
+			.live[data-state="offline"] { color: #888; }
+			.hint { color: #888; font-size: 11px; margin: 0 12px 8px; }
+		</style>
+	</head>
+	<body>
+		<sdpi-item label="Label">
+			<sdpi-textfield setting="label" placeholder="WIND"></sdpi-textfield>
+		</sdpi-item>
+		<sdpi-item label="Arrow">
+			<sdpi-select setting="arrowConvention" default="to">
+				<option value="to">Points where the wind blows to</option>
+				<option value="from">Points where the wind comes from</option>
+			</sdpi-select>
+		</sdpi-item>
+		<sdpi-item label="Heading-up">
+			<sdpi-checkbox setting="headingUp" label="Rotate with the aircraft heading (arrow relative to the nose)"></sdpi-checkbox>
+		</sdpi-item>
+		<sdpi-item label="Direction">
+			<sdpi-checkbox setting="showDirection" label="Show as DDD/speed instead of speed only"></sdpi-checkbox>
+		</sdpi-item>
+		<div class="hint">Reads <code>A:AMBIENT WIND DIRECTION</code>, <code>A:AMBIENT WIND VELOCITY</code>, <code>A:AMBIENT TEMPERATURE</code> and <code>A:PLANE HEADING DEGREES TRUE</code>.</div>
+		<sdpi-item label="Press">
+			<sdpi-textfield setting="pressAction" id="pressField" placeholder="optional: K:EVENT, H:NAME, RPN:code"></sdpi-textfield>
+		</sdpi-item>
+		<sdpi-item label="">
+			<span class="live" id="pressFieldLive"></span>
+		</sdpi-item>
+		<sdpi-item label="Long press">
+			<sdpi-textfield setting="longPressAction" id="longField" placeholder="optional, fired when held ≥ 500 ms"></sdpi-textfield>
+		</sdpi-item>
+		<sdpi-item label="">
+			<span class="live" id="longFieldLive"></span>
+		</sdpi-item>
+		<sdpi-item label="Auto-Repeat">
+			<sdpi-checkbox setting="autoRepeat" label="Repeat at 5 Hz while held (off when a long press is set)"></sdpi-checkbox>
+		</sdpi-item>
+		<sdpi-item label="Feedback">
+			<sdpi-checkbox setting="hideConfirmation" label="Hide green confirmation icon on success"></sdpi-checkbox>
+		</sdpi-item>
+
+		<details>
+			<summary>SimConnect connection (all buttons)</summary>
+			<sdpi-item label="Sim host">
+				<sdpi-textfield setting="simHost" global placeholder="empty = this PC (local)"></sdpi-textfield>
+			</sdpi-item>
+			<sdpi-item label="Port">
+				<sdpi-textfield setting="simPort" global placeholder="500" pattern="[0-9]*"></sdpi-textfield>
+			</sdpi-item>
+		</details>
+		<script>
+			SimPI.attachBridgeInstaller();
+			SimPI.attachProbe("pressField", "pressFieldLive", "event");
+			SimPI.attachProbe("longField", "longFieldLive", "event");
+		</script>
+	</body>
+</html>

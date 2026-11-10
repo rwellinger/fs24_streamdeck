@@ -1,0 +1,79 @@
+<!doctype html>
+<!--
+  fs24_streamdeck - Stream Deck plugin for MSFS 2024
+  Copyright (c) 2026 thWelly
+
+  Licensed under the MIT License.
+  See the LICENSE file in the project root for full license text.
+-->
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>MSFS Variable State</title>
+		<script src="https://sdpi-components.dev/releases/v4/sdpi-components.js"></script>
+		<script src="sim-pi-helpers.js"></script>
+		<style>
+			.live { font-family: monospace; font-size: 11px; color: #9a9; word-break: break-all; }
+			.live[data-state="not-found"], .live[data-state="error"] { color: #d97; }
+			.live[data-state="offline"] { color: #888; }
+			.hint { color: #888; font-size: 11px; margin: 0 12px 8px; }
+			.hint code { white-space: nowrap; }
+		</style>
+	</head>
+	<body>
+		<sdpi-item label="Title">
+			<sdpi-textfield setting="title" placeholder="optional header, e.g. ALT"></sdpi-textfield>
+		</sdpi-item>
+		<sdpi-item label="Text">
+			<sdpi-textfield setting="text" placeholder="default text, e.g. {(A:AUTOPILOT ALTITUDE LOCK VAR, Feet)} ft"></sdpi-textfield>
+		</sdpi-item>
+		<sdpi-item label="States">
+			<sdpi-textarea setting="states" id="statesField" rows="8" placeholder="(L:MFD1_Mode) 0 == | green | FND&#10;* | off | FND"></sdpi-textarea>
+		</sdpi-item>
+		<sdpi-item label="">
+			<span class="live" id="statesFieldLive"></span>
+		</sdpi-item>
+		<div class="hint">
+			One rule per line: <code>condition | style | text</code>, first match wins.
+			Condition = RPN, true when non-zero, e.g. <code>(L:X) 2 ==</code>,
+			<code>(L:A) 1 == (A:SIM ON GROUND, Bool) 0 == and</code>; <code>*</code> = always.
+			Style: <code>off white green amber red blue cyan</code>.
+			Text optional (empty = default text); <code>\n</code> = new line,
+			<code>{rpn}</code> / <code>{rpn|%.1f}</code> = live value. <code>#</code> = comment.
+		</div>
+		<sdpi-item label="Press">
+			<sdpi-textfield setting="pressAction" id="pressField" placeholder="optional: K:EVENT, H:NAME, RPN:code"></sdpi-textfield>
+		</sdpi-item>
+		<sdpi-item label="">
+			<span class="live" id="pressFieldLive"></span>
+		</sdpi-item>
+		<sdpi-item label="Long press">
+			<sdpi-textfield setting="longPressAction" id="longField" placeholder="optional, fired when held ≥ 500 ms"></sdpi-textfield>
+		</sdpi-item>
+		<sdpi-item label="">
+			<span class="live" id="longFieldLive"></span>
+		</sdpi-item>
+		<sdpi-item label="Auto-Repeat">
+			<sdpi-checkbox setting="autoRepeat" label="Repeat at 5 Hz while held (off when a long press is set)"></sdpi-checkbox>
+		</sdpi-item>
+		<sdpi-item label="Feedback">
+			<sdpi-checkbox setting="hideConfirmation" label="Hide green confirmation icon on success"></sdpi-checkbox>
+		</sdpi-item>
+
+		<details>
+			<summary>SimConnect connection (all buttons)</summary>
+			<sdpi-item label="Sim host">
+				<sdpi-textfield setting="simHost" global placeholder="empty = this PC (local)"></sdpi-textfield>
+			</sdpi-item>
+			<sdpi-item label="Port">
+				<sdpi-textfield setting="simPort" global placeholder="500" pattern="[0-9]*"></sdpi-textfield>
+			</sdpi-item>
+		</details>
+		<script>
+			SimPI.attachBridgeInstaller();
+			SimPI.attachProbe("statesField", "statesFieldLive", "rules");
+			SimPI.attachProbe("pressField", "pressFieldLive", "event");
+			SimPI.attachProbe("longField", "longFieldLive", "event");
+		</script>
+	</body>
+</html>

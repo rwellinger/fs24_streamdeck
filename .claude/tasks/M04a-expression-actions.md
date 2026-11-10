@@ -25,6 +25,6 @@ Graphic AAO gauges (hover vector, bambi bucket, hoist cable, slider art) become 
 
 ## Acceptance criteria
 
-- [ ] RPN evaluator covers every `S:` / visibility expression of the AAO profile (script check against the inventory).
+- [x] RPN evaluator covers every `S:` / visibility expression of the AAO profile (script check against the inventory: 141/142; the wind-rose rotation `ddiff` is replaced by `wind-display`).
 - [ ] `var-state`, `wind-display`, long press, display press work against the live sim (H145 loaded).
-- [ ] `make check` green.
+- [x] `make check` green.

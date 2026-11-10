@@ -106,9 +106,12 @@ fs24_streamdeck/
 - `src/sim/probe.ts` + `ui/sim-pi-helpers.js` — PI live preview via `sendToPlugin` (the PI can't reach SimConnect itself).
 - `src/actions/base/var-action.ts` — base for actions rendering one subscribed var (offline / not-found / aircraft change handled there).
 - `src/util/condition.ts` — press condition (reads the var at press time).
+- `src/util/rpn.ts` — plugin-side evaluator for read-only RPN expressions (`(L:X) 2 ==`, AAO `(S:…)`); vars are subscribed, the expression re-evaluated locally. Unknown tokens / writes are compile errors. `scripts/smoke-rpn.ts`.
+- `src/util/state-rules.ts` + `state-tile-svg.ts` — `var-state` rule list (`condition | style | text`, `{rpn|%fmt}` placeholders) and its annunciator tile. `scripts/smoke-state.ts` runs rules against the live sim.
+- `src/util/press.ts` — `PressController`: short / long press (≥ 500 ms) / auto-repeat, shared by `command`, `var-display`, `var-state`, `wind-display`.
 - `src/util/coerce.ts`, `settings.ts`, `format.ts` (`formatSimValue`, numbers only), `error-tile.ts`, `*-svg.ts` / `*-image.ts` renderers, `src/const.ts`.
 
-Not ported yet (port from `~/Workspace/x-plane/xp_streamdeck/src/` when needed): `macro-*`, selectors/placeholders, guarded, multi-display, wind. Rotary/encoder were dropped (Stream Deck XL has no dials).
+Not ported yet (port from `~/Workspace/x-plane/xp_streamdeck/src/` when needed): `macro-*`, selectors/placeholders, guarded, multi-display. `var-state` covers most of what multi-display / display-selector did. Rotary/encoder were dropped (Stream Deck XL has no dials).
 
 ## Button Icon Pipeline
 
