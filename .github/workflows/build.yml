@@ -67,6 +67,7 @@ jobs:
         run: |
           bin=$(dirname "$(readlink -f "$(command -v clang++)")")
           make wasm-package LLVM_BIN="$bin" LLD_BIN="$bin"
+          make wasm-probes LLVM_BIN="$bin" LLD_BIN="$bin"
 
       - uses: actions/upload-artifact@v7
         with:

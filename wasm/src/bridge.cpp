@@ -12,7 +12,9 @@
 
 #include <MSFS/Legacy/gauges.h>
 #include <MSFS/MSFS.h>
+#ifndef BRIDGE_HEVENT_VIA_RPN
 #include <MSFS/MSFS_Events.h>
+#endif
 #include <SimConnect.h>
 
 #include <cstdint>
@@ -63,7 +65,9 @@ static_assert(sizeof(Command) == 1032, "protocol: command layout");
 static_assert(sizeof(Response) == 272, "protocol: response layout");
 
 HANDLE sim = 0;
+#ifndef BRIDGE_HEVENT_VIA_RPN
 std::unordered_map<std::string, FsHEventId> hEvents;
+#endif
 
 void setText(Response& r, const char* s) {
 	if (!s) return;
@@ -71,6 +75,26 @@ void setText(Response& r, const char* s) {
 	r.text[sizeof(r.text) - 1] = '\0';
 }
 
+void runRpn(const char* code, Response& r) {
+	FLOAT64 f = 0;
+	SINT32 i = 0;
+	PCSTRINGZ s = nullptr;
+	if (!execute_calculator_code(code, &f, &i, &s)) {
+		r.status = ST_RPN_FAILED;
+		return;
+	}
+	r.value = f;
+	setText(r, s);
+}
+
+#ifdef BRIDGE_HEVENT_VIA_RPN
+// 2020-mode build (probe): the 2024 H:-event API is unavailable.
+void fireHEvent(const char* name, Response& r) {
+	std::string code = std::string("(>H:") + name + ")";
+	runRpn(code.c_str(), r);
+	if (r.status == ST_RPN_FAILED) r.status = ST_HEVENT_CALL;
+}
+#else
 void fireHEvent(const char* name, Response& r) {
 	auto it = hEvents.find(name);
 	FsHEventId id;
@@ -90,18 +114,7 @@ void fireHEvent(const char* name, Response& r) {
 		r.value = static_cast<double>(err);
 	}
 }
-
-void runRpn(const char* code, Response& r) {
-	FLOAT64 f = 0;
-	SINT32 i = 0;
-	PCSTRINGZ s = nullptr;
-	if (!execute_calculator_code(code, &f, &i, &s)) {
-		r.status = ST_RPN_FAILED;
-		return;
-	}
-	r.value = f;
-	setText(r, s);
-}
+#endif
 
 void handle(const Command& in) {
 	if (in.seq == 0) return;
@@ -191,5 +204,7 @@ extern "C" MSFS_CALLBACK void module_init(void) {
 extern "C" MSFS_CALLBACK void module_deinit(void) {
 	if (sim) SimConnect_Close(sim);
 	sim = 0;
+#ifndef BRIDGE_HEVENT_VIA_RPN
 	hEvents.clear();
+#endif
 }

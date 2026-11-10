@@ -6,7 +6,7 @@ SDPLUGIN_DIR := $(PLUGIN_UUID).sdPlugin
 MAIN_BRANCH  := main
 STREAMDECK   := npx --no-install streamdeck
 
-.PHONY: help setup build deploy clean distclean test lint lint-fix format format-check check icons package gh-build cleanup_branches cleanup_builds sdk wasm wasm-package bridge-ping
+.PHONY: help setup build deploy clean distclean test lint lint-fix format format-check check icons package gh-build cleanup_branches cleanup_builds sdk wasm wasm-package wasm-probes bridge-ping
 
 help: ## Show available targets
 	@awk 'BEGIN {FS = ":.*## "; printf "Available targets:\n"} \
@@ -58,6 +58,11 @@ wasm: ## Compile the WASM bridge (wasm/build/*.wasm)
 
 wasm-package: wasm ## Assemble the bridge Community package in wasm/out/
 	npx --no-install tsx scripts/build-bridge-package.ts
+
+wasm-probes: ## Build loader-probe packages in wasm/out/ (M03 diagnosis)
+	$(MAKE) -C wasm probes
+	@for p in fs24-probe-empty24 fs24-probe-empty20 fs24-probe-bridge20; do \
+		npx --no-install tsx scripts/build-bridge-package.ts $$p || exit 1; done
 
 bridge-ping: ## Smoke-test the bridge over SimConnect (FS24_HOST, FS24_PORT, FS24_HEVENT, FS24_RPN)
 	npx --no-install tsx scripts/bridge-ping.ts
