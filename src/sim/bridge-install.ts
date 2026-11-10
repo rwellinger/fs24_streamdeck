@@ -168,11 +168,15 @@ async function status(sim: SimClient): Promise<Status> {
 			canInstall: true,
 		};
 	}
+	// MSFS loads standalone modules only at startup.
+	const needsRestart = sim.isConnected() && running !== installed;
 	return {
 		...base,
 		state: "current",
 		installed,
-		text: `Up to date · ${parts}`,
+		text: needsRestart
+			? `Restart MSFS to activate bridge ${installed} · ${parts}`
+			: `Up to date · ${parts}`,
 		canInstall: false,
 	};
 }
