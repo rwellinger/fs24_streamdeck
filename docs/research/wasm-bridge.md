@@ -59,4 +59,5 @@ Two ClientData areas, both created by the bridge at `module_init`. All little-en
 | `H:` via `fsEventsHEventCall` | pending (H145) |
 | `(>H:…)` via RPN | pending (H145) |
 | RPN read `(A:PLANE ALTITUDE, feet)` | ✅ value returned, 33 ms |
-| `1 (>K:PAUSE_SET)` via RPN | pending |
+| RPN write `(>K:TOGGLE_NAV_LIGHTS)` | ✅ `(A:LIGHT NAV, Bool)` 0 → 1 → 0 |
+| Pause via RPN: `1 (>K:PAUSE_SET)`, `(>K:PAUSE_ON)`, `(>K:ACTIVE_PAUSE_TOGGLE)` | ❌ accepted (status 0), no effect — neither sets nor clears Active Pause (toolbar icon, blue dot when active). Same as external SimConnect in M01: MSFS 2024 ignores pause key events from any client. Workaround for users: Stream Deck's built-in Hotkey action with the sim's pause key binding. `E:SIMULATION TIME` keeps running during Active Pause → not usable as a pause indicator. |
