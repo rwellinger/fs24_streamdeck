@@ -66,14 +66,18 @@ async function main(): Promise<void> {
 	const options = HOST ? { remote: { host: HOST, port: PORT } } : undefined;
 	const { recvOpen, handle } = await open("fs24-bridge-ping", Protocol.KittyHawk, options);
 	log(`connected: ${recvOpen.applicationName}`);
+	const sent = new Map<number, string>();
+	const track = (label: string, sendId: number) => sent.set(sendId, label);
 	handle.on("exception", (ex: RecvException) =>
-		log(`SimConnect exception ${ex.exception} (send id ${ex.sendId}, index ${ex.index})`),
+		log(
+			`SimConnect exception ${ex.exceptionName} (${ex.exception}) on ${sent.get(ex.sendId) ?? `send id ${ex.sendId}`}, index ${ex.index}`,
+		),
 	);
 
-	handle.mapClientDataNameToID("fs24.bridge.cmd", CD_CMD);
-	handle.mapClientDataNameToID("fs24.bridge.rsp", CD_RSP);
-	handle.addToClientDataDefinition(DEF_CMD, 0, CMD_SIZE);
-	handle.addToClientDataDefinition(DEF_RSP, 0, RSP_SIZE);
+	track("map cmd", handle.mapClientDataNameToID("fs24.bridge.cmd", CD_CMD));
+	track("map rsp", handle.mapClientDataNameToID("fs24.bridge.rsp", CD_RSP));
+	track("define cmd", handle.addToClientDataDefinition(DEF_CMD, 0, CMD_SIZE));
+	track("define rsp", handle.addToClientDataDefinition(DEF_RSP, 0, RSP_SIZE));
 
 	const waiters = new Map<number, (r: Response) => void>();
 	handle.on("clientData", (d) => {
@@ -81,12 +85,15 @@ async function main(): Promise<void> {
 		const r = decode(d.data.readBytes(RSP_SIZE));
 		waiters.get(r.seq)?.(r);
 	});
-	handle.requestClientData(
-		CD_RSP,
-		REQ_RSP,
-		DEF_RSP,
-		ClientDataPeriod.ON_SET,
-		ClientDataRequestFlag.CLIENT_DATA_REQUEST_FLAG_DEFAULT,
+	track(
+		"request rsp",
+		handle.requestClientData(
+			CD_RSP,
+			REQ_RSP,
+			DEF_RSP,
+			ClientDataPeriod.ON_SET,
+			ClientDataRequestFlag.CLIENT_DATA_REQUEST_FLAG_DEFAULT,
+		),
 	);
 
 	let seq = (Date.now() & 0xffff) + 1;
@@ -108,7 +115,10 @@ async function main(): Promise<void> {
 				log(`  ${(performance.now() - t0).toFixed(0)} ms`);
 				resolve(r);
 			});
-			handle.setClientData(CD_CMD, DEF_CMD, 0, 0, CMD_SIZE, encode(id, op, arg));
+			track(
+				`write cmd seq ${id}`,
+				handle.setClientData(CD_CMD, DEF_CMD, 0, 0, CMD_SIZE, encode(id, op, arg)),
+			);
 		});
 	};
 
