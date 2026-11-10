@@ -30,4 +30,5 @@ Replace the user's AAO-based H145 Stream Deck XL profile with one built on this 
 - [ ] Every action of the AAO profile has an equivalent, or is listed in the PR as deliberately dropped (with reason).
 - [ ] Engine start, lights, AP modes/beeps, MFD softkeys tested in a real flight on the sim PC with the XL.
 - [ ] State images follow the sim (switching in the virtual cockpit updates the button).
+- [ ] Carried over from M04a: `var-display` press + auto-repeat (LUM key: value climbs while held, MFD powered) and `wind-display` heading-up (arrow turns with the aircraft, with wind set).
 - [ ] `make check` green.
