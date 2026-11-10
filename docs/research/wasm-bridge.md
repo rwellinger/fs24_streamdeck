@@ -43,7 +43,8 @@ Answers to the open questions of `.claude/tasks/M03-wasm-bridge.md`. Researched 
 - CI builds the bridge first (`wasm` job), the `plugin` job bundles it at `com.robertw.fs24.sdPlugin/bridge/fs24-streamdeck-bridge/` (gitignored) before packing.
 - `src/sim/bridge-install.ts`, triggered from the PI section "WASM bridge (all buttons)" — the button press is the user's confirmation, nothing runs on its own.
 - Community folder: `InstalledPackagesPath` from `UserCfg.opt` (MS Store `%LOCALAPPDATA%\Packages\Microsoft.Limitless_8wekyb3d8bbwe\LocalCache\UserCfg.opt`, then Steam `%APPDATA%\Microsoft Flight Simulator 2024\UserCfg.opt`) + `\Community`; fallback `…\LocalCache\Packages\Community` (seen in the sim log).
-- States: missing / outdated (by `package_version`) / current / **linked** (symlink or junction, e.g. an add-on linker — reported, never overwritten).
+- States: missing / outdated (by `package_version`) / current / **linked** (symlink or junction, e.g. an add-on linker — reported, never overwritten). Verified live: linked package shown as `Linked package (left alone) · installed 0.1.5 · running 0.1.5 · plugin has 0.1.5`, button disabled.
+- Plugin updates: the Stream Deck app replaces an installed plugin only when `Version` changes → CI stamps `x.y.z.<run number>`. Verified: double-click on 0.0.1.28 replaced 0.0.1.27 without uninstalling.
 - Install: copy to `Community\.fs24-streamdeck-bridge.installing`, remove the old folder, rename. MSFS loads it on the next start; the PI shows the running version next to the installed one.
 
 ## Protocol (v1)
