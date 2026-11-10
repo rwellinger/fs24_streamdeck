@@ -17,7 +17,7 @@ import type { JsonObject } from "@elgato/utils";
 
 import { TIMINGS, TOLERANCE_FLOAT } from "../const";
 import type { SimClient } from "../sim";
-import { parseEventName, parseEventSpec } from "../sim/path";
+import { parseEventName, parsePressAction } from "../sim/path";
 import { toFiniteNumber } from "../util/coerce";
 import { type ConditionSettings, parseCondition, pressBlocked } from "../util/condition";
 import { type EnumMap, parseEnumMap } from "../util/enum";
@@ -192,9 +192,9 @@ export class VarSwitch extends VarAction<VarSwitchSettings, State> {
 				if (!name.ok) throw new Error(`event: ${name.error}`);
 				await this.sim.transmitEvent(name.path, Math.round(target));
 			} else if (mode === "event-incdec") {
-				const spec = parseEventSpec(trimString(up ? s.eventUp : s.eventDown));
-				if (!spec.ok) throw new Error(`event: ${spec.error}`);
-				await this.sim.transmitEvent(spec.path.name, spec.path.value);
+				const press = parsePressAction(trimString(up ? s.eventUp : s.eventDown));
+				if (!press.ok) throw new Error(`event: ${press.error}`);
+				await this.sim.fire(press.path);
 			} else {
 				await this.sim.write(path, target);
 				state.value = target;

@@ -19,7 +19,7 @@ import type { JsonObject } from "@elgato/utils";
 
 import { TIMINGS } from "../const";
 import type { SimClient } from "../sim";
-import { parseEventName } from "../sim/path";
+import { describePressAction, type PressAction, parsePressAction } from "../sim/path";
 import { toFiniteNumber } from "../util/coerce";
 import { clearOffline, setOffline } from "../util/error-tile";
 import { trimString } from "../util/settings";
@@ -60,28 +60,33 @@ export class SimCommand extends SingletonAction<CommandSettings> {
 
 	override async onKeyDown(ev: KeyDownEvent<CommandSettings>): Promise<void> {
 		const s = ev.payload.settings ?? {};
-		const name = parseEventName(trimString(s.eventName));
-		if (!name.ok) {
-			streamDeck.logger.warn(`command: event name: ${name.error}`);
+		const parsed = parsePressAction(trimString(s.eventName));
+		if (!parsed.ok) {
+			streamDeck.logger.warn(`command: event: ${parsed.error}`);
 			await ev.action.showAlert();
 			return;
 		}
 
+		let press: PressAction = parsed.path;
 		const rawValue = trimString(s.eventValue);
-		const value = rawValue ? toFiniteNumber(rawValue) : 0;
-		if (value === undefined || !Number.isInteger(value)) {
-			streamDeck.logger.warn(`command: invalid eventValue "${rawValue}"`);
-			await ev.action.showAlert();
-			return;
+		if (press.kind === "K" && rawValue) {
+			const value = toFiniteNumber(rawValue);
+			if (value === undefined || !Number.isInteger(value)) {
+				streamDeck.logger.warn(`command: invalid eventValue "${rawValue}"`);
+				await ev.action.showAlert();
+				return;
+			}
+			press = { ...press, value };
 		}
 
+		const label = describePressAction(press);
 		try {
-			await this.sim.transmitEvent(name.path, value);
-			streamDeck.logger.info(`command: ${name.path} (${value})`);
-			if (s.autoRepeat === true) this.startRepeater(ev.action.id, name.path, value);
+			await this.sim.fire(press);
+			streamDeck.logger.info(`command: ${label}`);
+			if (s.autoRepeat === true) this.startRepeater(ev.action.id, press);
 			if (s.hideConfirmation !== true) await ev.action.showOk();
 		} catch (err) {
-			streamDeck.logger.error(`command failed: ${name.path}`, err);
+			streamDeck.logger.error(`command failed: ${label}`, err);
 			await ev.action.showAlert();
 		}
 	}
@@ -91,15 +96,18 @@ export class SimCommand extends SingletonAction<CommandSettings> {
 		return Promise.resolve();
 	}
 
-	private startRepeater(actionId: string, name: string, value: number): void {
+	private startRepeater(actionId: string, press: PressAction): void {
 		this.stopRepeater(actionId);
 		const entry: Repeater = {
 			initial: setTimeout(() => {
 				entry.interval = setInterval(() => {
 					this.sim
-						.transmitEvent(name, value)
+						.fire(press)
 						.catch((err) =>
-							streamDeck.logger.error(`command repeat failed: ${name}`, err),
+							streamDeck.logger.error(
+								`command repeat failed: ${describePressAction(press)}`,
+								err,
+							),
 						);
 				}, TIMINGS.REPEAT_INTERVAL_MS);
 			}, TIMINGS.REPEAT_INITIAL_DELAY_MS),

@@ -53,12 +53,11 @@ icons: ## Generate button icons from scripts/icons/catalog.ts into out/icons/
 sdk: ## Download the MSFS 2024 SDK subset for the WASM build into sdk/ (needs msitools)
 	scripts/fetch-sdk.sh
 
-wasm: ## Compile the WASM bridge + loader probe (wasm/build/*.wasm; stock LLVM on the Mac, Asobo's in CI)
+wasm: ## Compile the WASM bridge (wasm/build/*.wasm; stock LLVM on the Mac = compile check only, Asobo's in CI)
 	wasm/build.sh
 
-wasm-package: wasm ## Assemble the Community packages (bridge + probe) in wasm/out/
+wasm-package: wasm ## Assemble the bridge Community package in wasm/out/
 	npx --no-install tsx scripts/build-bridge-package.ts
-	npx --no-install tsx scripts/build-bridge-package.ts fs24-probe-empty
 
 bridge-ping: ## Smoke-test the bridge over SimConnect (FS24_HOST, FS24_PORT, FS24_HEVENT, FS24_RPN)
 	npx --no-install tsx scripts/bridge-ping.ts

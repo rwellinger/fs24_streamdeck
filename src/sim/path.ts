@@ -90,6 +90,46 @@ export function parseEventSpec(raw: string): ParseResult<EventSpec> {
 	return { ok: true, path: { name: name.path, value } };
 }
 
+/**
+ * What a button press fires:
+ * - `K:NAME [value]` / `NAME [value]` — K:-event via SimConnect
+ * - `H:NAME` — H:-event via the WASM bridge (case kept: HPG uses mixed case)
+ * - `RPN:<code>` — calculator code via the WASM bridge, passed verbatim
+ */
+export type PressAction =
+	| { kind: "K"; name: string; value: number }
+	| { kind: "H"; name: string }
+	| { kind: "RPN"; code: string };
+
+const RPN_MAX_BYTES = 1023;
+
+export function parsePressAction(raw: string): ParseResult<PressAction> {
+	const trimmed = raw.trim();
+	const rpn = /^RPN:([\s\S]*)$/i.exec(trimmed);
+	if (rpn) {
+		const code = rpn[1].trim();
+		if (!code) return { ok: false, error: "RPN: code is empty" };
+		if (Buffer.byteLength(code, "utf8") > RPN_MAX_BYTES)
+			return { ok: false, error: `RPN code longer than ${RPN_MAX_BYTES} bytes` };
+		return { ok: true, path: { kind: "RPN", code } };
+	}
+	const h = /^H:(.*)$/i.exec(unwrap(trimmed));
+	if (h) {
+		const name = h[1].trim();
+		if (!name) return { ok: false, error: "H:-event name is empty" };
+		if (!/^[A-Za-z0-9_.:-]+$/.test(name))
+			return { ok: false, error: `invalid H:-event name "${name}"` };
+		return { ok: true, path: { kind: "H", name } };
+	}
+	const k = parseEventSpec(trimmed);
+	return k.ok ? { ok: true, path: { kind: "K", ...k.path } } : k;
+}
+
+export function describePressAction(a: PressAction): string {
+	if (a.kind === "K") return `K:${a.name}${a.value !== 0 ? ` ${a.value}` : ""}`;
+	return a.kind === "H" ? `H:${a.name}` : `RPN:${a.code}`;
+}
+
 export function describeVar(p: VarPath): string {
 	return p.kind === "B" ? `B:${p.name}` : `${p.kind}:${p.name}, ${p.unit}`;
 }

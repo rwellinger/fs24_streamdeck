@@ -44,7 +44,7 @@
 			<sdpi-select setting="triggerMode" default="write" id="modeSelect">
 				<option value="write">Write new value</option>
 				<option value="event-set">Fire K:-event with new value</option>
-				<option value="event-incdec">Fire up / down K:-events</option>
+				<option value="event-incdec">Fire up / down events (K:, H:, RPN:)</option>
 			</sdpi-select>
 		</sdpi-item>
 		<div id="eventSetItems">
@@ -55,7 +55,7 @@
 		</div>
 		<div id="eventIncDecItems">
 			<sdpi-item label="Event up">
-				<sdpi-textfield setting="eventUp" id="eventUpField" placeholder="e.g. MAGNETO1_INCR"></sdpi-textfield>
+				<sdpi-textfield setting="eventUp" id="eventUpField" placeholder="e.g. MAGNETO1_INCR or H:NAME"></sdpi-textfield>
 			</sdpi-item>
 			<sdpi-item label=""><span class="live" id="eventUpFieldLive"></span></sdpi-item>
 			<sdpi-item label="Event down">
@@ -145,7 +145,7 @@
 		</details>
 		<script>
 			SimPI.attachProbe("varField", "varFieldLive");
-			SimPI.attachProbe("eventSetField", "eventSetFieldLive", "event");
+			SimPI.attachProbe("eventSetField", "eventSetFieldLive", "kevent");
 			SimPI.attachProbe("eventUpField", "eventUpFieldLive", "event");
 			SimPI.attachProbe("eventDownField", "eventDownFieldLive", "event");
 			SimPI.attachProbe("conditionField", "conditionFieldLive");

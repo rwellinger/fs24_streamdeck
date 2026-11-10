@@ -16,7 +16,7 @@ import type { JsonObject } from "@elgato/utils";
 
 import { TOLERANCE_FLOAT } from "../const";
 import type { SimClient } from "../sim";
-import { parseEventSpec, parseVarPath } from "../sim/path";
+import { describePressAction, parsePressAction, parseVarPath } from "../sim/path";
 import { toFiniteNumber } from "../util/coerce";
 import { type ConditionSettings, parseCondition, pressBlocked } from "../util/condition";
 import { clearTile } from "../util/error-tile";
@@ -159,10 +159,10 @@ export class VarToggle extends VarAction<VarToggleSettings, State> {
 				return;
 			}
 			const raw = mode === "event" ? s.event : isOn ? s.eventOff : s.eventOn;
-			const spec = parseEventSpec(trimString(raw));
-			if (!spec.ok) throw new Error(`event: ${spec.error}`);
-			await this.sim.transmitEvent(spec.path.name, spec.path.value);
-			streamDeck.logger.info(`var-toggle: event ${spec.path.name} ${spec.path.value}`);
+			const press = parsePressAction(trimString(raw));
+			if (!press.ok) throw new Error(`event: ${press.error}`);
+			await this.sim.fire(press.path);
+			streamDeck.logger.info(`var-toggle: ${describePressAction(press.path)}`);
 		} catch (err) {
 			streamDeck.logger.error("var-toggle: press failed", err);
 			await ev.action.showAlert();

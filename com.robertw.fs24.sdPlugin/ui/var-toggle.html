@@ -42,8 +42,8 @@
 		<sdpi-item label="On press">
 			<sdpi-select setting="triggerMode" default="write" id="modeSelect">
 				<option value="write">Write ON / OFF value</option>
-				<option value="event">Fire one K:-event</option>
-				<option value="event-on-off">Fire ON / OFF K:-events</option>
+				<option value="event">Fire one event (K:, H:, RPN:)</option>
+				<option value="event-on-off">Fire ON / OFF events (K:, H:, RPN:)</option>
 			</sdpi-select>
 		</sdpi-item>
 		<div id="writeItems">
@@ -58,20 +58,22 @@
 			</sdpi-item>
 		</div>
 		<div id="eventItems">
-			<sdpi-item label="K:-Event">
+			<sdpi-item label="Event">
 				<sdpi-textfield setting="event" id="eventField" placeholder="e.g. STROBES_TOGGLE"></sdpi-textfield>
 			</sdpi-item>
 			<sdpi-item label=""><span class="live" id="eventFieldLive"></span></sdpi-item>
+			<div class="hint"><code>K:NAME [value]</code> (prefix optional), <code>H:NAME</code> or <code>RPN:code</code> — H: and RPN: need the WASM bridge in the sim.</div>
 		</div>
 		<div id="eventOnOffItems">
 			<sdpi-item label="Event ON">
-				<sdpi-textfield setting="eventOn" id="eventOnField" placeholder="e.g. MAGNETO1_SET 3"></sdpi-textfield>
+				<sdpi-textfield setting="eventOn" id="eventOnField" placeholder="e.g. MAGNETO1_SET 3 or H:NAME_ON"></sdpi-textfield>
 			</sdpi-item>
 			<sdpi-item label=""><span class="live" id="eventOnFieldLive"></span></sdpi-item>
 			<sdpi-item label="Event OFF">
-				<sdpi-textfield setting="eventOff" id="eventOffField" placeholder="e.g. MAGNETO1_SET 0"></sdpi-textfield>
+				<sdpi-textfield setting="eventOff" id="eventOffField" placeholder="e.g. MAGNETO1_SET 0 or H:NAME_OFF"></sdpi-textfield>
 			</sdpi-item>
 			<sdpi-item label=""><span class="live" id="eventOffFieldLive"></span></sdpi-item>
+			<div class="hint"><code>K:NAME [value]</code> (prefix optional), <code>H:NAME</code> or <code>RPN:code</code> — H: and RPN: need the WASM bridge in the sim.</div>
 		</div>
 		<details>
 			<summary>Look</summary>

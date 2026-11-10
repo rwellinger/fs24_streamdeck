@@ -16,7 +16,8 @@ import {
 	SimConnectConstants,
 } from "node-simconnect";
 
-import { describeVar, type VarPath } from "./path";
+import { Bridge, type RpnResult } from "./bridge";
+import { describeVar, type PressAction, type VarPath } from "./path";
 import { type VarConnection, type VarListener, VarRegistry } from "./vars";
 
 export type SimTarget = { host: string; port: number } | null;
@@ -78,10 +79,12 @@ export class SimClient extends EventEmitter<ClientEvents> {
 	private readonly sendErrors = new Map<number, (err: Error) => void>();
 	private aircraftTimer: NodeJS.Timeout | null = null;
 	private readonly vars: VarRegistry;
+	private readonly bridge: Bridge;
 
 	constructor(private readonly logger: Logger) {
 		super();
 		this.vars = new VarRegistry(logger);
+		this.bridge = new Bridge(logger);
 	}
 
 	/** Subscribe to a var; returns the unsubscribe function. */
@@ -154,6 +157,27 @@ export class SimClient extends EventEmitter<ClientEvents> {
 
 	isConnected(): boolean {
 		return this.handle !== null;
+	}
+
+	/** Fires a press action: K:-events via SimConnect, H:/RPN via the WASM bridge. */
+	async fire(a: PressAction): Promise<RpnResult | undefined> {
+		if (!this.handle) throw new Error("SimConnect not connected");
+		switch (a.kind) {
+			case "K":
+				await this.transmitEvent(a.name, a.value);
+				return undefined;
+			case "H":
+				await this.bridge.hEvent(a.name);
+				return undefined;
+			case "RPN":
+				return this.bridge.rpn(a.code);
+		}
+	}
+
+	/** WASM bridge version; rejects when the bridge doesn't answer. */
+	bridgeVersion(): Promise<string> {
+		if (!this.handle) return Promise.reject(new Error("SimConnect not connected"));
+		return this.bridge.ensureReady();
 	}
 
 	/**
@@ -276,6 +300,11 @@ export class SimClient extends EventEmitter<ClientEvents> {
 			barrier: () => this.barrier(handle),
 		};
 		this.vars.attach(conn);
+		this.bridge.attach({
+			handle,
+			onSendError: conn.onSendError,
+			forgetSendError: (sendId) => this.sendErrors.delete(sendId),
+		});
 		handle.on("quit", () => this.onLost(handle, "sim quit"));
 		handle.on("close", () => this.onLost(handle, "socket closed"));
 		handle.on("error", (err) => this.onLost(handle, errText(err)));
@@ -321,6 +350,7 @@ export class SimClient extends EventEmitter<ClientEvents> {
 			this.aircraftTimer = null;
 		}
 		this.vars.detach();
+		this.bridge.detach();
 		if (handle) {
 			handle.removeAllListeners("close");
 			handle.removeAllListeners("quit");

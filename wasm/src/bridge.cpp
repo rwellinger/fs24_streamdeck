@@ -6,20 +6,18 @@
  * See the LICENSE file in the project root for full license text.
  */
 
-// In-sim bridge: fires H:-events and executes RPN for the Stream Deck plugin.
+// In-sim bridge: executes RPN (incl. H:-events as `(>H:name)`) for the Stream
+// Deck plugin.
 // Protocol: docs/research/wasm-bridge.md. Event-driven only (ClientData
 // ON_SET) — nothing runs while no command arrives.
 
 #include <MSFS/Legacy/gauges.h>
 #include <MSFS/MSFS.h>
-#include <MSFS/MSFS_Events.h>
 #include <SimConnect.h>
 
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
-#include <string>
-#include <unordered_map>
 
 #ifndef BRIDGE_VERSION
 #error "BRIDGE_VERSION must be defined by the build"
@@ -35,14 +33,14 @@ enum : SIMCONNECT_CLIENT_DATA_ID { CD_CMD = 0, CD_RSP = 1 };
 enum : SIMCONNECT_CLIENT_DATA_DEFINITION_ID { DEF_CMD = 0, DEF_RSP = 1 };
 enum : SIMCONNECT_DATA_REQUEST_ID { REQ_CMD = 0 };
 
-enum Op : uint32_t { OP_PING = 1, OP_HEVENT = 2, OP_RPN = 3 };
+// Op 2 (H:-event via fsEventsHEventCall) is retired: that 2024 API always
+// returned FS_EVENTS_ERROR_FAIL. H:-events are sent as RPN `(>H:name)`.
+enum Op : uint32_t { OP_PING = 1, OP_RPN = 3 };
 
 enum Status : int32_t {
 	ST_OK = 0,
 	ST_UNKNOWN_OP = 1,
 	ST_EMPTY_ARG = 2,
-	ST_HEVENT_REGISTER = 3,
-	ST_HEVENT_CALL = 4,
 	ST_RPN_FAILED = 5,
 };
 
@@ -63,7 +61,6 @@ static_assert(sizeof(Command) == 1032, "protocol: command layout");
 static_assert(sizeof(Response) == 272, "protocol: response layout");
 
 HANDLE sim = 0;
-std::unordered_map<std::string, FsHEventId> hEvents;
 
 void setText(Response& r, const char* s) {
 	if (!s) return;
@@ -83,26 +80,6 @@ void runRpn(const char* code, Response& r) {
 	setText(r, s);
 }
 
-void fireHEvent(const char* name, Response& r) {
-	auto it = hEvents.find(name);
-	FsHEventId id;
-	if (it != hEvents.end()) {
-		id = it->second;
-	} else {
-		id = fsEventsRegisterHEvent(name);
-		if (id == FS_EVENT_INVALID_ID) {
-			r.status = ST_HEVENT_REGISTER;
-			return;
-		}
-		hEvents.emplace(name, id);
-	}
-	FsEventsError err = fsEventsHEventCall(id, FsVarParamArray{});
-	if (err != FS_EVENTS_ERROR_NONE) {
-		r.status = ST_HEVENT_CALL;
-		r.value = static_cast<double>(err);
-	}
-}
-
 void handle(const Command& in) {
 	if (in.seq == 0) return;
 	Command cmd = in;
@@ -117,12 +94,9 @@ void handle(const Command& in) {
 		r.value = PROTOCOL_VERSION;
 		setText(r, BRIDGE_VERSION);
 		break;
-	case OP_HEVENT:
 	case OP_RPN:
 		if (cmd.arg[0] == '\0') {
 			r.status = ST_EMPTY_ARG;
-		} else if (cmd.op == OP_HEVENT) {
-			fireHEvent(cmd.arg, r);
 		} else {
 			runRpn(cmd.arg, r);
 		}
@@ -191,5 +165,4 @@ extern "C" MSFS_CALLBACK void module_init(void) {
 extern "C" MSFS_CALLBACK void module_deinit(void) {
 	if (sim) SimConnect_Close(sim);
 	sim = 0;
-	hEvents.clear();
 }

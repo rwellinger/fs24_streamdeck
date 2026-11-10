@@ -46,7 +46,9 @@
 	/**
 	 * @param fieldId  id of the sdpi-textfield
 	 * @param previewId id of the element that shows the result
-	 * @param kind "var" (A:/L:/B: — polls the live value) or "event" (syntax only)
+	 * @param kind "var" (A:/L:/B: — polls the live value), "event" (K:/H:/RPN:
+	 *             press action; H:/RPN: also report the WASM bridge) or "kevent"
+	 *             (K:-event name only)
 	 */
 	const attachProbe = async (fieldId, previewId, kind = "var") => {
 		const field = document.getElementById(fieldId);

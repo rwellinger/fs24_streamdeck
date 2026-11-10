@@ -8,7 +8,6 @@
 
 // Assemble the Community package for the WASM bridge without fspackagetool:
 // wasm/out/<name>/{manifest.json, layout.json, modules/<name>.wasm}.
-// Optional argument: package name (default the bridge; also used for probes).
 
 import {
 	copyFileSync,
@@ -21,7 +20,7 @@ import {
 } from "node:fs";
 import { join, relative, sep } from "node:path";
 
-const NAME = process.argv[2] ?? "fs24-streamdeck-bridge";
+const NAME = "fs24-streamdeck-bridge";
 const ROOT = join(import.meta.dirname, "..");
 const WASM_DIR = join(ROOT, "wasm");
 const PKG = join(WASM_DIR, "out", NAME);
@@ -44,7 +43,7 @@ function walk(dir: string): string[] {
 const manifest = {
 	dependencies: [],
 	content_type: "MISC",
-	title: NAME === "fs24-streamdeck-bridge" ? "fs24 Stream Deck Bridge" : NAME,
+	title: "fs24 Stream Deck Bridge",
 	manufacturer: "",
 	creator: "thWelly",
 	package_version: VERSION,

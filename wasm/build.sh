@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build the WASM bridge (and the loader probe) against the MSFS 2024 SDK.
+# Build the WASM bridge against the MSFS 2024 SDK.
 #
 #   TOOLCHAIN=sdk   Asobo's LLVM from the SDK (WASM/llvm, Windows only) — the
 #                   release build; flags = SDK MSBuild toolset
@@ -84,5 +84,3 @@ build() { # <source> <module name>
 }
 
 build bridge.cpp fs24-streamdeck-bridge
-# Loader probe (temporary, M03 diagnosis): empty module, same toolchain/flags.
-build probe_empty.cpp fs24-probe-empty

@@ -33,8 +33,10 @@ Answers to the open questions of `.claude/tasks/M03-wasm-bridge.md`. Researched 
 
 ## 4. H:-events
 
-- MSFS 2024 has a dedicated API: `fsEventsRegisterHEvent(name)` → `FsHEventId`, `fsEventsHEventCall(id, FsVarParamArray)` (`MSFS/MSFS_Events.h`). The bridge uses it for `H:`.
-- RPN uses `execute_calculator_code` (legacy `gauges.h`, still present in 2024). Whether `(>H:…)` via RPN is equally reliable: verify live alongside.
+- MSFS 2024 has a dedicated API, `fsEventsRegisterHEvent(name)` + `fsEventsHEventCall(id, FsVarParamArray)` (`MSFS/MSFS_Events.h`). Tested live with the H145: **every call returns `FS_EVENTS_ERROR_FAIL` (0xFFFFFFFF), no effect.** Retired (bridge 0.1.5 drops it).
+- RPN `(>H:NAME)` via `execute_calculator_code` works reliably — same path MobiFlight/AAO use. The plugin sends `H:NAME` as RPN `(>H:NAME)`.
+- H145: the L:-var reflects the switch after **0.25–1 s** (JS systems) — state tiles lag accordingly.
+- While a sim menu is open (e.g. controls settings) H:-events have no effect — the cockpit isn't running.
 
 ## Protocol (v1)
 
@@ -46,8 +48,8 @@ Two ClientData areas, both created by the bridge at `module_init`. All little-en
 | response | `fs24.bridge.rsp` | `u32 seq`, `i32 status`, `f64 value`, `char text[256]` (272 B) | bridge (read-only for others) |
 
 - The bridge subscribes to `cmd` with `ON_SET` — no polling, idle cost ≈ 0. `seq = 0` is ignored.
-- Ops: `1 PING` → `value` = protocol version, `text` = bridge version. `2 HEVENT` (`arg` = name without `H:`). `3 RPN` (`arg` = code) → `value` = float result, `text` = string result.
-- Status: `0` ok, `1` unknown op, `2` empty arg, `3` H:-event register failed, `4` H:-event call failed, `5` RPN failed.
+- Ops: `1 PING` → `value` = protocol version, `text` = bridge version. `3 RPN` (`arg` = code) → `value` = float result, `text` = string result. Op `2` (H:-event via the 2024 API) is retired; H:-events are RPN `(>H:NAME)`.
+- Status: `0` ok, `1` unknown op, `2` empty arg, `5` RPN failed (`3`/`4` belonged to the retired op 2).
 - One slot: the plugin serialises commands and matches the response by `seq`.
 
 ## Live results
@@ -56,8 +58,10 @@ Two ClientData areas, both created by the bridge at `module_init`. All little-en
 |---|---|
 | Module loads (Dev Mode → WASM debug lists it, console shows init line) | ✅ 0.1.4 (Asobo toolchain); stock-LLVM builds ❌ (`Error getting memory`) |
 | PING round trip from the Mac (`scripts/bridge-ping.ts`) | ✅ 25 ms, remote SimConnect port 502, DA42 |
-| `H:` via `fsEventsHEventCall` | pending (H145) |
-| `(>H:…)` via RPN | pending (H145) |
+| `H:` via `fsEventsHEventCall` | ❌ always `FS_EVENTS_ERROR_FAIL`, no effect (H145) |
+| `(>H:…)` via RPN (plugin `H:NAME`) | ✅ H145 `H145_SDK_OH_PITOT_1_ON/OFF` → `L:H145_SDK_OH_PITOT_1` 0 → 1 → 0 within 0.25–1 s |
+| AAO toggle script via `RPN:` | ✅ toggles both ways |
+| Plugin `SimClient.fire()` K / H / RPN, three concurrent RPN | ✅ serialised, 33 / 67 / 100 ms |
 | RPN read `(A:PLANE ALTITUDE, feet)` | ✅ value returned, 33 ms |
 | RPN write `(>K:TOGGLE_NAV_LIGHTS)` | ✅ `(A:LIGHT NAV, Bool)` 0 → 1 → 0 |
 | Pause via RPN: `1 (>K:PAUSE_SET)`, `(>K:PAUSE_ON)`, `(>K:ACTIVE_PAUSE_TOGGLE)` | ❌ accepted (status 0), no effect — neither sets nor clears Active Pause (toolbar icon, blue dot when active). Same as external SimConnect in M01: MSFS 2024 ignores pause key events from any client. Workaround for users: Stream Deck's built-in Hotkey action with the sim's pause key binding. `E:SIMULATION TIME` keeps running during Active Pause → not usable as a pause indicator. |

@@ -65,14 +65,13 @@ jobs:
 
       - run: scripts/fetch-sdk.sh
 
-      - name: Build bridge packages
+      - name: Build bridge package
         env:
           SDK_DIR: ../sdk/${{ steps.sdk.outputs.version }}
           TOOLCHAIN: sdk
         run: |
           wasm/build.sh
           npx --no-install tsx scripts/build-bridge-package.ts
-          npx --no-install tsx scripts/build-bridge-package.ts fs24-probe-empty
 
       - uses: actions/upload-artifact@v7
         with:

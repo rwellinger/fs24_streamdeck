@@ -10,9 +10,10 @@ import streamDeck from "@elgato/streamdeck";
 import type { JsonValue } from "@elgato/utils";
 
 import type { SimClient } from "./client";
-import { parseEventSpec, parseVarPath } from "./path";
+import { describePressAction, parseEventName, parsePressAction, parseVarPath } from "./path";
 
-type ProbeRequest = { type: "probe"; field: string; kind: "var" | "event"; text: string };
+type ProbeKind = "var" | "event" | "kevent";
+type ProbeRequest = { type: "probe"; field: string; kind: ProbeKind; text: string };
 
 /**
  * PI live preview: the property inspector can't talk to SimConnect, so it
@@ -23,7 +24,8 @@ export function installProbeHandler(sim: SimClient): void {
 	streamDeck.ui.onSendToPlugin<JsonValue>((ev) => {
 		const req = ev.payload as Partial<ProbeRequest> | null;
 		if (!req || req.type !== "probe" || typeof req.field !== "string") return;
-		answer(sim, req.kind === "event" ? "event" : "var", String(req.text ?? ""))
+		const kind: ProbeKind = req.kind === "event" || req.kind === "kevent" ? req.kind : "var";
+		answer(sim, kind, String(req.text ?? ""))
 			.then((result) =>
 				streamDeck.ui.sendToPropertyInspector({
 					type: "probe",
@@ -37,15 +39,27 @@ export function installProbeHandler(sim: SimClient): void {
 
 async function answer(
 	sim: SimClient,
-	kind: "var" | "event",
+	kind: ProbeKind,
 	text: string,
 ): Promise<{ state: string; text: string }> {
 	if (!text.trim()) return { state: "empty", text: "" };
+	if (kind === "kevent") {
+		const name = parseEventName(text);
+		return name.ok
+			? { state: "ok", text: `K:${name.path}` }
+			: { state: "error", text: name.error };
+	}
 	if (kind === "event") {
-		const spec = parseEventSpec(text);
-		return spec.ok
-			? { state: "ok", text: `K:${spec.path.name} value ${spec.path.value}` }
-			: { state: "error", text: spec.error };
+		const press = parsePressAction(text);
+		if (!press.ok) return { state: "error", text: press.error };
+		const label = describePressAction(press.path);
+		if (press.path.kind === "K") return { state: "ok", text: label };
+		if (!sim.isConnected()) return { state: "offline", text: `${label} — sim not connected` };
+		try {
+			return { state: "ok", text: `${label} — via WASM bridge ${await sim.bridgeVersion()}` };
+		} catch {
+			return { state: "not-found", text: `${label} — WASM bridge not responding` };
+		}
 	}
 	const parsed = parseVarPath(text);
 	if (!parsed.ok) return { state: "error", text: parsed.error };

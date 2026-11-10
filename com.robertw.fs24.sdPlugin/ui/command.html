@@ -20,14 +20,15 @@
 		</style>
 	</head>
 	<body>
-		<sdpi-item label="K:-Event">
-			<sdpi-textfield setting="eventName" id="eventField" placeholder="e.g. TOGGLE_NAV_LIGHTS" required></sdpi-textfield>
+		<sdpi-item label="Event">
+			<sdpi-textfield setting="eventName" id="eventField" placeholder="e.g. TOGGLE_NAV_LIGHTS, H:NAME, RPN:code" required></sdpi-textfield>
 		</sdpi-item>
 		<sdpi-item label="">
 			<span class="live" id="eventFieldLive"></span>
 		</sdpi-item>
+		<div class="hint"><code>K:NAME</code> (prefix optional), <code>H:NAME</code> or <code>RPN:code</code> — H: and RPN: need the WASM bridge in the sim.</div>
 		<sdpi-item label="Value">
-			<sdpi-textfield setting="eventValue" placeholder="optional, default 0" pattern="-?[0-9]*"></sdpi-textfield>
+			<sdpi-textfield setting="eventValue" placeholder="K: only, optional, default 0" pattern="-?[0-9]*"></sdpi-textfield>
 		</sdpi-item>
 		<sdpi-item label="Auto-Repeat">
 			<sdpi-checkbox setting="autoRepeat" label="Repeat at 5 Hz while held (after 500 ms)"></sdpi-checkbox>
