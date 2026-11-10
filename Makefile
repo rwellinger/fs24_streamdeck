@@ -6,7 +6,7 @@ SDPLUGIN_DIR := $(PLUGIN_UUID).sdPlugin
 MAIN_BRANCH  := main
 STREAMDECK   := npx --no-install streamdeck
 
-.PHONY: help setup build deploy clean distclean test lint lint-fix format format-check check icons package gh-build cleanup_branches
+.PHONY: help setup build deploy clean distclean test lint lint-fix format format-check check icons package gh-build cleanup_branches sdk wasm wasm-package bridge-ping
 
 help: ## Show available targets
 	@awk 'BEGIN {FS = ":.*## "; printf "Available targets:\n"} \
@@ -25,6 +25,7 @@ clean: ## Remove build output (bin, logs, packed plugin, generated icons) — ke
 	rm -rf $(SDPLUGIN_DIR)/bin $(SDPLUGIN_DIR)/logs
 	rm -f $(PLUGIN_UUID).streamDeckPlugin
 	rm -rf out
+	$(MAKE) -C wasm clean
 
 distclean: clean ## Like clean, plus wipe node_modules
 	rm -rf node_modules
@@ -48,6 +49,18 @@ check: lint test ## Run lint + type-check — required before every commit
 
 icons: ## Generate button icons from scripts/icons/catalog.ts into out/icons/
 	npm run --silent icons
+
+sdk: ## Download the MSFS 2024 SDK subset for the WASM build into sdk/ (needs msitools)
+	scripts/fetch-sdk.sh
+
+wasm: ## Compile the WASM bridge (wasm/build/*.wasm)
+	$(MAKE) -C wasm
+
+wasm-package: wasm ## Assemble the bridge Community package in wasm/out/
+	npx --no-install tsx scripts/build-bridge-package.ts
+
+bridge-ping: ## Smoke-test the bridge over SimConnect (FS24_HOST, FS24_PORT, FS24_HEVENT, FS24_RPN)
+	npx --no-install tsx scripts/bridge-ping.ts
 
 package: build ## Build a distributable .streamDeckPlugin
 	$(STREAMDECK) pack -f $(SDPLUGIN_DIR)
