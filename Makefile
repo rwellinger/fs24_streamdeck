@@ -6,7 +6,7 @@ SDPLUGIN_DIR := $(PLUGIN_UUID).sdPlugin
 MAIN_BRANCH  := main
 STREAMDECK   := npx --no-install streamdeck
 
-.PHONY: help setup build deploy clean distclean test lint lint-fix format format-check check icons package gh-build cleanup_branches sdk wasm wasm-package bridge-ping
+.PHONY: help setup build deploy clean distclean test lint lint-fix format format-check check icons package gh-build cleanup_branches cleanup_builds sdk wasm wasm-package bridge-ping
 
 help: ## Show available targets
 	@awk 'BEGIN {FS = ":.*## "; printf "Available targets:\n"} \
@@ -74,6 +74,13 @@ gh-build: ## Run the GitHub build (manual workflow) on origin/main, wait, print 
 	@id=$$(gh run list --workflow build.yml --limit 1 --json databaseId -q '.[0].databaseId'); \
 		gh run watch $$id --exit-status && \
 		echo "Artifact: $$(gh run view $$id --json url -q .url) → Artifacts"
+
+cleanup_builds: ## Delete all GitHub Actions runs except the latest one per workflow
+	@ids=$$(gh run list --limit 1000 --json databaseId,workflowName,createdAt \
+		-q 'group_by(.workflowName) | map(sort_by(.createdAt) | reverse | .[1:]) | flatten | .[].databaseId'); \
+	if [ -z "$$ids" ]; then echo "Nothing to delete."; exit 0; fi; \
+	echo "Deleting $$(echo "$$ids" | wc -l | tr -d ' ') run(s)…"; \
+	for id in $$ids; do gh run delete $$id >/dev/null && echo "  deleted $$id"; done
 
 cleanup_branches: ## Delete local branches already merged into main
 	git fetch --prune origin
