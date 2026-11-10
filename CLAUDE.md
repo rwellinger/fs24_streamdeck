@@ -11,7 +11,7 @@ Sibling project: `~/Workspace/x-plane/xp_streamdeck` (X-Plane 12). Sim-agnostic 
 ## Architecture — two components
 
 1. **Stream Deck plugin** (TypeScript, Node 24, `@elgato/streamdeck`) — talks SimConnect directly via `node-simconnect` (pure JS protocol implementation, no native addon). Covers A:-SimVars, K:-events, L:-vars (via `L:` prefix in data definitions, SDK ≥ SU12), B:-input events.
-2. **WASM bridge** (C++, MSFS SDK, `wasm/`) — tiny in-sim module reached via SimConnect ClientData. Only for what SimConnect cannot do: fire H:-events, execute RPN calculator code. No logic beyond that.
+2. **WASM bridge** (C++, MSFS SDK, `wasm/`) — tiny in-sim module reached via SimConnect ClientData. Only for what SimConnect cannot do: execute RPN calculator code (H:-events are sent as RPN `(>H:name)`). No logic beyond that. Bundled in the plugin and installed into `Community/` from the PI ("WASM bridge" section). Protocol, toolchain and findings: `docs/research/wasm-bridge.md`.
 
 ## Tech Stack
 
@@ -28,9 +28,9 @@ Sibling project: `~/Workspace/x-plane/xp_streamdeck` (X-Plane 12). Sim-agnostic 
 | Task | Where |
 |---|---|
 | Write / build / lint TS plugin | Mac |
-| Run the plugin against the live sim | Stream Deck app on the **Mac**, SimConnect over TCP to the sim PC |
-| Compile WASM bridge | Mac (clang/wasi-sdk) or GitHub Actions — never on the sim PC |
-| Package the WASM module | script-generated `layout.json` / `manifest.json`, no `fspackagetool` |
+| Run the plugin against the live sim | `make gh-build` → install the artefact on the sim PC (preferred). Protocol checks: tsx scripts from the Mac over SimConnect TCP (port 502) |
+| Compile WASM bridge | GitHub Actions Windows runner with the SDK's own LLVM (`make gh-build`) — the only build the sim loads. Mac `make wasm` (Homebrew LLVM) = compile check only |
+| Package the WASM module | script-generated `layout.json` / `manifest.json` (`scripts/build-bridge-package.ts`), no `fspackagetool` |
 | Debug WASM | MSFS Developer Mode console |
 | Final acceptance | sim PC: double-click `.streamDeckPlugin`, like a normal user |
 
@@ -38,22 +38,22 @@ Sibling project: `~/Workspace/x-plane/xp_streamdeck` (X-Plane 12). Sim-agnostic 
 
 MS Store paths:
 - `SimConnect.xml`: `%LOCALAPPDATA%\Packages\Microsoft.Limitless_8wekyb3d8bbwe\LocalCache\SimConnect.xml` (verified M01). Ships with a pipe, IPv4 `500` and IPv6 `501` entry (local scope). Remote dev access = additional global IPv4 entry on `502`. A plugin on the sim PC connects locally with no config (node-simconnect autodetect).
-- `UserCfg.opt` (holds `InstalledPackagesPath`, → Community folder): `%LOCALAPPDATA%\Packages\Microsoft.Limitless_8wekyb3d8bbwe\LocalCache\UserCfg.opt` (not yet verified — needed in M03)
+- `UserCfg.opt` (holds `InstalledPackagesPath`, → Community folder): `%LOCALAPPDATA%\Packages\Microsoft.Limitless_8wekyb3d8bbwe\LocalCache\UserCfg.opt`. Community folder on the sim PC: `…\LocalCache\Packages\Community` (verified M03 via the sim log; also the self-install fallback).
 
 ### MSFS SDK licensing
 
-SDK headers/libs must **never** be committed (`/sdk/` is gitignored). The repo is **public** (since M01) — SDK files and third-party profiles/scripts must stay out. How CI obtains them is decided in M03.
+SDK headers/libs must **never** be committed (`/sdk/` is gitignored). The repo is **public** (since M01) — SDK files and third-party profiles/scripts must stay out. The SDK installer is public (`sdk.flightsimulator.com/msfs2024/files/sdk.json`); `scripts/fetch-sdk.sh` (`make sdk`, needs `msitools` on the Mac) extracts the needed subset, CI keeps it in the Actions cache per SDK version.
 
 ## MSFS variable model (vs. X-Plane)
 
 | MSFS | Read | Write | Path |
 |---|---|---|---|
 | `A:` SimVar | yes | some (settable SimVars) | SimConnect, needs **unit** (`A:LIGHT BEACON, Bool`), index via `:n` |
-| `K:` event | – | trigger (+ value) | SimConnect `MapClientEventToSimEvent`. Pause events (`PAUSE_TOGGLE`/`PAUSE_SET`) have no effect in 2024 from an external client → test via WASM RPN in M03 |
+| `K:` event | – | trigger (+ value) | SimConnect `MapClientEventToSimEvent`. Pause events (`PAUSE_*`, `ACTIVE_PAUSE_TOGGLE`) have no effect in 2024 from any client, not even via RPN in the bridge → Stream Deck hotkey action |
 | `L:` var | yes | yes | SimConnect data definition with `L:` prefix |
 | `L:1:` scoped var (2024-native aircraft) | flaky | flaky | known SimConnect issues — avoid, fall back to WASM |
 | `B:` input event | yes | yes | SimConnect InputEvent API — verified (enumerate/get/set); enumeration contains duplicates, dedupe by hash |
-| `H:` event | – | trigger | **WASM bridge only** |
+| `H:` event | – | trigger | **WASM bridge only**, as RPN `(>H:name)` (the 2024 `fsEventsHEventCall` API always fails). H145 L:-state follows after 0.25–1 s |
 | RPN calculator code | – | execute | **WASM bridge only** |
 
 - SimConnect IDs (define/request/event IDs) are **connection-scoped** — re-register on every reconnect.
@@ -70,7 +70,7 @@ fs24_streamdeck/
 │   ├── actions/                 # One file per action type
 │   ├── sim/                     # SimConnect client, subscriptions, WASM bridge client
 │   └── util/                    # Helpers (copied from xp_streamdeck)
-├── wasm/                        # C++ WASM bridge (M03)
+├── wasm/                        # C++ WASM bridge (src/bridge.cpp, build.sh, VERSION)
 ├── scripts/                     # tsx utilities (icon generator, smoke tests)
 ├── docs/research/               # Aircraft analyses
 └── .claude/tasks/               # Milestone task files
@@ -99,9 +99,10 @@ fs24_streamdeck/
 
 ## Sim layer and shared helpers
 
-- `src/sim/path.ts` — path syntax: `A:NAME[:n], unit` / `L:name[, unit]` / `B:name` (`VarPath`), `K:EVENT [value]` (`parseEventSpec`). AAO-style `(A:…)` accepted.
+- `src/sim/path.ts` — path syntax: `A:NAME[:n], unit` / `L:name[, unit]` / `B:name` (`VarPath`); press actions `K:EVENT [value]` / `H:NAME` / `RPN:<code>` (`parsePressAction`; `parseEventSpec` for K: only). AAO-style `(A:…)` / `(>H:…)` accepted.
+- `src/sim/bridge.ts` — WASM bridge client (ClientData, PING handshake per connection, serialised commands, fast failure when absent). `src/sim/bridge-install.ts` — self-install from the PI.
 - `src/sim/vars.ts` — `VarRegistry`: ref-counted subscriptions (one data definition per var+unit), B: hash resolution via input-event enumeration, writes, re-registration on reconnect, refresh on aircraft change, 10 Hz emit throttle. Values are plain `number`; `null` = unknown var.
-- `src/sim/client.ts` — connection, K:-events, `subscribe` / `read` / `write`, events `online` / `offline` / `aircraftChanged`.
+- `src/sim/client.ts` — connection, `fire(PressAction)` (K: via SimConnect, H:/RPN: via the bridge), `subscribe` / `read` / `write`, events `online` / `offline` / `aircraftChanged`.
 - `src/sim/probe.ts` + `ui/sim-pi-helpers.js` — PI live preview via `sendToPlugin` (the PI can't reach SimConnect itself).
 - `src/actions/base/var-action.ts` — base for actions rendering one subscribed var (offline / not-found / aircraft change handled there).
 - `src/util/condition.ts` — press condition (reads the var at press time).

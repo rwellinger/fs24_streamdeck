@@ -33,9 +33,11 @@ H145 actions/profile (M04).
 
 ## Acceptance criteria
 
-- [ ] Module builds without any tooling on the sim PC; build documented and reproducible.
-- [ ] With the H145 loaded: `H:H145_SDK_OH_PITOT_1_ON` from a `command` button switches the pitot heat; state readable via `L:H145_SDK_OH_PITOT_1`.
-- [ ] RPN string from a button works (e.g. the toggle script from the analysis doc).
-- [ ] Bridge missing → clear alert on press, no crash, log entry explains.
-- [ ] No measurable sim FPS impact with the bridge loaded and idle (compare dev-mode FPS counter).
-- [ ] `make check` green.
+- [x] Module builds without any tooling on the sim PC; build documented and reproducible. — GitHub Actions Windows runner with the SDK's own LLVM, SDK fetched from the official URL into the Actions cache (`docs/research/wasm-bridge.md`).
+- [x] With the H145 loaded: `H:H145_SDK_OH_PITOT_1_ON` from a `command` button switches the pitot heat; state readable via `L:H145_SDK_OH_PITOT_1`. — pilot + co-pilot pitot via buttons on the sim PC, switch state tile correct.
+- [x] RPN string from a button works (e.g. the toggle script from the analysis doc). — toggle script toggles both ways.
+- [x] Bridge missing → clear alert on press, no crash, log entry explains. — verified on the sim PC (MSFS started without the bridge).
+- [x] No measurable sim FPS impact with the bridge loaded and idle (compare dev-mode FPS counter). — 60 fps capped, all green; WASM Debug callbacks avg 0.010 ms / max 0.028 ms.
+- [x] `make check` green.
+
+Answers to the open questions: `docs/research/wasm-bridge.md`. Self-install verified (linked package left alone; real install from the PI button, active after MSFS restart).
