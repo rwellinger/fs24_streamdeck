@@ -558,9 +558,6 @@ function main(): void {
 		out[target] = new TextEncoder().encode(JSON.stringify(manifest, null, 2));
 	}
 
-	mkdirSync(dirname(outPath), { recursive: true });
-	writeFileSync(outPath, zipSync(out));
-
 	console.log(`\nAAO → fs24 (${buttons} buttons)\n`);
 	for (const [k, n] of [...report.counts].sort()) console.log(`  ${k.padEnd(24)} ${n}`);
 	console.log(`  ${"dropped".padEnd(24)} ${report.dropped.length}`);
@@ -571,8 +568,13 @@ function main(): void {
 	dump("Dropped", report.dropped);
 	dump("Simplified", report.notes);
 	dump("ERRORS", report.errors);
+	if (report.errors.length) {
+		console.error(`\n✗ ${report.errors.length} errors — ${outPath} not written\n`);
+		process.exit(1);
+	}
+	mkdirSync(dirname(outPath), { recursive: true });
+	writeFileSync(outPath, zipSync(out));
 	console.log(`\n→ ${outPath}\n`);
-	if (report.errors.length) process.exit(1);
 }
 
 main();
