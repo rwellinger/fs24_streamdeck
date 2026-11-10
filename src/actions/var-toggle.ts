@@ -110,7 +110,7 @@ export class VarToggle extends VarAction<VarToggleSettings, State> {
 	override async onKeyDown(ev: KeyDownEvent<VarToggleSettings>): Promise<void> {
 		const state = this.states.get(ev.action.id);
 		const s = ev.payload.settings ?? {};
-		if (!state || !state.path) {
+		if (!state?.path) {
 			streamDeck.logger.warn("var-toggle: state var is empty or invalid");
 			await ev.action.showAlert();
 			return;
