@@ -12,15 +12,16 @@ Answers to the open questions of `.claude/tasks/M03-wasm-bridge.md`. Researched 
 
 ## 2. Toolchain
 
-- The SDK ships its own LLVM 15 (`WASM/llvm/bin/clang-cl.exe`, `wasm-ld.exe`) — Windows binaries only.
-- We build with stock LLVM (Homebrew `llvm` + `lld` on the Mac, apt `clang`/`lld` in CI) against the SDK's `wasi-sysroot`.
-- Flags are taken from the SDK's MSBuild toolset (`WASM/vs/2022/Microsoft.Cpp.MSFS.Common.targets`), see `wasm/Makefile`. Deviations:
-  - `--stack-guard-page` is an Asobo-patched `wasm-ld` option, unknown to stock lld → dropped.
-  - Edit-and-continue options (`--eac-*`) dropped.
-  - Newer clang enables more WASM features by default (sign-ext, mutable-globals, reference-types, multivalue, …). The MSFS runtime accepts **MVP + bulk-memory only**: `MSFS_WasmVersions.a` (Asobo's 2024 toolchain) and the MobiFlight module carry just `bulk-memory` in `target_features`, Navigraph's `cargo-msfs` builds with `+bulk-memory` and runs `wasm-opt --signext-lowering`. We pin `-mcpu=mvp -mbulk-memory`; a 0.1.0/0.1.1 build with sign-ext + mutable-globals showed `Status: FAILED` in WASM Debug. Check: `wasm-validate --disable-sign-extension --disable-mutable-globals --disable-saturating-float-to-int <wasm>`.
-- Stack: `--stack-first -z stack-size=1048576` (1 MB, like Rust/Navigraph). With lld's default 64 KB stack (memory 2 pages) every module — even an empty one — compiles but fails with `WASM: Error getting memory in module …` → `Status: FAILED` in WASM Debug.
+- The SDK ships its own LLVM 15 (`WASM/llvm/bin/clang-cl.exe`, Asobo-patched `wasm-ld.exe`) — Windows binaries only.
+- **Release build: Asobo's LLVM on a GitHub Actions Windows runner** (`windows-2025`, job `wasm`). The MSI is unpacked with `msiexec /a` (no install, no Visual Studio/MSBuild); `clang-cl.exe --driver-mode=g++` takes clang++-style flags. Flags = SDK MSBuild toolset (`WASM/vs/2022/Microsoft.Cpp.MSFS.Common.targets`), incl. `--stack-guard-page`. Single source: `wasm/build.sh`.
 - `MSFS_WasmVersions.a` must be linked (exports `GetSimConnectVersion` / `GetExtensionVersion*`); without it the module is treated as a 2020 module.
-- Status: a test module with SimConnect + ClientData + `execute_calculator_code` + `fsEventsRegisterHEvent` links cleanly on the Mac. **Loader acceptance by the sim: pending (PING test).**
+- WASM features: MVP + bulk-memory only (`-mcpu=mvp -mbulk-memory`). `MSFS_WasmVersions.a` and the MobiFlight module carry just `bulk-memory`; Navigraph's `cargo-msfs` builds with `+bulk-memory` and runs `wasm-opt --signext-lowering`.
+- Stock LLVM (`TOOLCHAIN=llvm`, Homebrew on the Mac): builds and validates, but **the sim does not load it**. History of attempts (all `Status: FAILED` in WASM Debug):
+  1. 0.1.0/0.1.1 — clang 23 / 18 with sign-ext + mutable-globals.
+  2. 0.1.2 — MVP + bulk-memory.
+  3. 0.1.3 + probes — 1 MB stack placed first (like Navigraph). Even an empty `module_init`, as 2024 and as 2020 module, compiles in the sim and then fails with `WASM: Error getting memory in module …`.
+  Remaining differences to Asobo's build are inside the toolchain (`--stack-guard-page`, LLVM 15 vs 18/23) → switched to the SDK's toolchain. The Mac build stays as a quick compile check.
+- Mac: `brew install msitools llvm lld`.
 
 ## 3. Packaging
 

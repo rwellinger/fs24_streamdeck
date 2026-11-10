@@ -33,8 +33,13 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+  # Release build of the WASM bridge with Asobo's own LLVM from the SDK
+  # (Windows binaries) — stock LLVM builds are not loadable by the sim.
   wasm:
-    runs-on: ubuntu-24.04
+    runs-on: windows-2025
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v7
 
@@ -44,9 +49,6 @@ jobs:
           cache: npm
 
       - run: npm ci
-
-      - name: Install toolchain (clang, lld, msitools)
-        run: sudo apt-get update -q && sudo apt-get install -y -q clang lld msitools
 
       - name: Resolve SDK version
         id: sdk
@@ -59,15 +61,18 @@ jobs:
       - uses: actions/cache@v6
         with:
           path: sdk/${{ steps.sdk.outputs.version }}
-          key: msfs2024-sdk-${{ steps.sdk.outputs.version }}
+          key: msfs2024-sdk-windows-${{ steps.sdk.outputs.version }}
 
-      - run: make sdk
+      - run: scripts/fetch-sdk.sh
 
-      - name: Build bridge package
+      - name: Build bridge packages
+        env:
+          SDK_DIR: ../sdk/${{ steps.sdk.outputs.version }}
+          TOOLCHAIN: sdk
         run: |
-          bin=$(dirname "$(readlink -f "$(command -v clang++)")")
-          make wasm-package LLVM_BIN="$bin" LLD_BIN="$bin"
-          make wasm-probes LLVM_BIN="$bin" LLD_BIN="$bin"
+          wasm/build.sh
+          npx --no-install tsx scripts/build-bridge-package.ts
+          npx --no-install tsx scripts/build-bridge-package.ts fs24-probe-empty
 
       - uses: actions/upload-artifact@v7
         with:
