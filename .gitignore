@@ -48,3 +48,6 @@ Thumbs.db
 /wasm/out/
 *.wasm
 *.sdPlugin/bridge/
+
+# Third-party reference material (AAO profiles/scripts) — licence forbids redistribution, never commit
+/references/
