@@ -54,8 +54,9 @@ Two ClientData areas, both created by the bridge at `module_init`. All little-en
 
 | Check | Result |
 |---|---|
-| Module loads (Dev Mode → WASM debug lists it, console shows init line) | pending |
-| PING round trip from the Mac (`scripts/bridge-ping.ts`) | pending |
+| Module loads (Dev Mode → WASM debug lists it, console shows init line) | ✅ 0.1.4 (Asobo toolchain); stock-LLVM builds ❌ (`Error getting memory`) |
+| PING round trip from the Mac (`scripts/bridge-ping.ts`) | ✅ 25 ms, remote SimConnect port 502, DA42 |
 | `H:` via `fsEventsHEventCall` | pending (H145) |
 | `(>H:…)` via RPN | pending (H145) |
+| RPN read `(A:PLANE ALTITUDE, feet)` | ✅ value returned, 33 ms |
 | `1 (>K:PAUSE_SET)` via RPN | pending |
