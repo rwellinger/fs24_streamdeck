@@ -23,8 +23,12 @@ jobs:
       - name: Lint + type-check
         run: make check
 
+      # The Stream Deck app only replaces an installed plugin when the version
+      # changes → x.y.z from the manifest, run number as 4th part.
       - name: Package
-        run: make package
+        run: |
+          base=$(node -p "require('./com.robertw.fs24.sdPlugin/manifest.json').Version.split('.').slice(0, 3).join('.')")
+          make package PLUGIN_VERSION="$base.${{ github.run_number }}"
 
       - uses: actions/upload-artifact@v7
         with:

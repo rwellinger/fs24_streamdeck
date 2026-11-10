@@ -62,8 +62,8 @@ wasm-package: wasm ## Assemble the bridge Community package in wasm/out/
 bridge-ping: ## Smoke-test the bridge over SimConnect (FS24_HOST, FS24_PORT, FS24_HEVENT, FS24_RPN)
 	npx --no-install tsx scripts/bridge-ping.ts
 
-package: build ## Build a distributable .streamDeckPlugin
-	$(STREAMDECK) pack -f $(SDPLUGIN_DIR)
+package: build ## Build a distributable .streamDeckPlugin (PLUGIN_VERSION=x.y.z.n stamps the version — also rewrites the manifest, CI only)
+	$(STREAMDECK) pack -f $(SDPLUGIN_DIR) $(if $(PLUGIN_VERSION),--version $(PLUGIN_VERSION))
 
 gh-build: ## Run the GitHub build (manual workflow) on origin/main, wait, print the artifact link
 	@test -z "$$(git status --porcelain)" || { echo "Uncommitted changes — commit first."; exit 1; }
