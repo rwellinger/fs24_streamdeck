@@ -32,3 +32,45 @@ jobs:
           path: com.robertw.fs24.streamDeckPlugin
           if-no-files-found: error
           retention-days: 30
+
+  wasm:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Install toolchain (clang, lld, msitools)
+        run: sudo apt-get update -q && sudo apt-get install -y -q clang lld msitools
+
+      - name: Resolve SDK version
+        id: sdk
+        run: |
+          v=$(curl -sSfL https://sdk.flightsimulator.com/msfs2024/files/sdk.json \
+            | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>console.log(JSON.parse(s).game_versions[0].release_notes[0]))')
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+
+      # SDK files stay in the private Actions cache; they are never committed or uploaded.
+      - uses: actions/cache@v6
+        with:
+          path: sdk/${{ steps.sdk.outputs.version }}
+          key: msfs2024-sdk-${{ steps.sdk.outputs.version }}
+
+      - run: make sdk
+
+      - name: Build bridge package
+        run: |
+          bin=$(dirname "$(readlink -f "$(command -v clang++)")")
+          make wasm-package LLVM_BIN="$bin" LLD_BIN="$bin"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: fs24-streamdeck-bridge
+          path: wasm/out/
+          if-no-files-found: error
+          retention-days: 30
