@@ -10,6 +10,7 @@
 //   - live preview of a var / event field: the PI can't reach SimConnect, so
 //     it asks the plugin ("probe", see src/sim/probe.ts) and shows the answer
 //   - show/hide items depending on a select's value
+//   - "WASM bridge" section: status + self-install (src/sim/bridge-install.ts)
 (() => {
 	const DEBOUNCE_MS = 400;
 	const REFRESH_MS = 1000;
@@ -107,5 +108,37 @@
 		setTimeout(apply, 300);
 	};
 
-	window.SimPI = { attachProbe, showWhen };
+	/** Appends the "WASM bridge (all buttons)" section to the PI. */
+	const attachBridgeInstaller = () => {
+		const section = document.createElement("details");
+		section.innerHTML = `
+			<summary>WASM bridge (all buttons)</summary>
+			<div class="hint" id="bridgeStatus">checking…</div>
+			<sdpi-item label="">
+				<sdpi-button id="bridgeInstall" disabled>Install / update bridge</sdpi-button>
+			</sdpi-item>
+			<div class="hint">Needed for H: and RPN: on the sim PC. Copies the bridge into the MSFS Community folder — restart MSFS afterwards.</div>`;
+		document.body.appendChild(section);
+		const statusEl = section.querySelector("#bridgeStatus");
+		const button = section.querySelector("#bridgeInstall");
+		const ask = (type) => client()?.send("sendToPlugin", { type }).catch(() => {});
+
+		client()?.sendToPropertyInspector.subscribe((ev) => {
+			const p = ev?.payload;
+			if (!p || p.type !== "bridge") return;
+			statusEl.textContent = p.message ? `${p.message} · ${p.text}` : p.text;
+			if (p.canInstall) button.removeAttribute("disabled");
+			else button.setAttribute("disabled", "");
+		});
+		button.addEventListener("click", () => {
+			button.setAttribute("disabled", "");
+			statusEl.textContent = "installing…";
+			ask("bridge-install");
+		});
+		section.addEventListener("toggle", () => {
+			if (section.open) ask("bridge-status");
+		});
+	};
+
+	window.SimPI = { attachProbe, showWhen, attachBridgeInstaller };
 })();

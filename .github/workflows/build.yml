@@ -10,6 +10,7 @@ permissions:
 jobs:
   plugin:
     runs-on: ubuntu-24.04
+    needs: wasm
     steps:
       - uses: actions/checkout@v7
 
@@ -22,6 +23,12 @@ jobs:
 
       - name: Lint + type-check
         run: make check
+
+      # Bundled for the self-install (src/sim/bridge-install.ts).
+      - uses: actions/download-artifact@v8
+        with:
+          name: fs24-streamdeck-bridge
+          path: com.robertw.fs24.sdPlugin/bridge/
 
       # The Stream Deck app only replaces an installed plugin when the version
       # changes → x.y.z from the manifest, run number as 4th part.
@@ -82,4 +89,4 @@ jobs:
           name: fs24-streamdeck-bridge
           path: wasm/out/
           if-no-files-found: error
-          retention-days: 30
+          retention-days: 7

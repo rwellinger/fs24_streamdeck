@@ -14,6 +14,7 @@ import { VarLamp } from "./actions/var-lamp";
 import { VarSwitch } from "./actions/var-switch";
 import { VarToggle } from "./actions/var-toggle";
 import { SimClient } from "./sim";
+import { installBridgeInstallHandler } from "./sim/bridge-install";
 import { type GlobalSettings, targetFromSettings } from "./sim/global-settings";
 import { installProbeHandler } from "./sim/probe";
 
@@ -31,6 +32,7 @@ streamDeck.actions.registerAction(new VarDisplay(sim));
 streamDeck.actions.registerAction(new VarSwitch(sim));
 streamDeck.actions.registerAction(new VarLamp(sim));
 installProbeHandler(sim);
+installBridgeInstallHandler(sim);
 
 streamDeck
 	.connect()

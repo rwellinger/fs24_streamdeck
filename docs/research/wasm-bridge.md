@@ -38,6 +38,14 @@ Answers to the open questions of `.claude/tasks/M03-wasm-bridge.md`. Researched 
 - H145: the L:-var reflects the switch after **0.25–1 s** (JS systems) — state tiles lag accordingly.
 - While a sim menu is open (e.g. controls settings) H:-events have no effect — the cockpit isn't running.
 
+## Self-install
+
+- CI builds the bridge first (`wasm` job), the `plugin` job bundles it at `com.robertw.fs24.sdPlugin/bridge/fs24-streamdeck-bridge/` (gitignored) before packing.
+- `src/sim/bridge-install.ts`, triggered from the PI section "WASM bridge (all buttons)" — the button press is the user's confirmation, nothing runs on its own.
+- Community folder: `InstalledPackagesPath` from `UserCfg.opt` (MS Store `%LOCALAPPDATA%\Packages\Microsoft.Limitless_8wekyb3d8bbwe\LocalCache\UserCfg.opt`, then Steam `%APPDATA%\Microsoft Flight Simulator 2024\UserCfg.opt`) + `\Community`; fallback `…\LocalCache\Packages\Community` (seen in the sim log).
+- States: missing / outdated (by `package_version`) / current / **linked** (symlink or junction, e.g. an add-on linker — reported, never overwritten).
+- Install: copy to `Community\.fs24-streamdeck-bridge.installing`, remove the old folder, rename. MSFS loads it on the next start; the PI shows the running version next to the installed one.
+
 ## Protocol (v1)
 
 Two ClientData areas, both created by the bridge at `module_init`. All little-endian, no padding.
