@@ -47,9 +47,9 @@ export class SimCommand extends SingletonAction<CommandSettings> {
 	override async onWillAppear(ev: WillAppearEvent<CommandSettings>): Promise<void> {
 		if (!ev.action.isKey()) return;
 		this.visible.set(ev.action.id, ev.action);
-		if (this.sim.isOffline()) {
-			await setOffline(ev.action);
-		}
+		// Reset in both directions: the Stream Deck app keeps the last image across
+		// plugin restarts/reinstalls, so a stale offline band would otherwise stay.
+		await (this.sim.isOffline() ? setOffline(ev.action) : clearOffline(ev.action));
 	}
 
 	override onWillDisappear(ev: WillDisappearEvent<CommandSettings>): Promise<void> {

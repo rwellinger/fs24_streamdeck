@@ -74,7 +74,9 @@ export abstract class VarAction<
 		if (!ev.action.isKey()) return;
 		const state = this.createState(ev.action, ev.payload.settings ?? ({} as TSettings));
 		this.states.set(ev.action.id, state);
-		if (this.sim.isOffline()) await setOffline(ev.action);
+		// Reset in both directions: the Stream Deck app keeps the last image across
+		// plugin restarts/reinstalls, so a stale offline band would otherwise stay.
+		await (this.sim.isOffline() ? setOffline(ev.action) : clearOffline(ev.action));
 		this.subscribe(state);
 	}
 
