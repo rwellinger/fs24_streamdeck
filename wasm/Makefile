@@ -18,7 +18,7 @@ OUT      := $(BUILD)/$(NAME).wasm
 OBJS     := $(BUILD)/bridge.o
 
 CXXFLAGS := --target=wasm32-unknown-wasi --sysroot=$(SYSROOT) \
-	-mcpu=mvp -msign-ext -mmutable-globals -mbulk-memory \
+	-mcpu=mvp -mbulk-memory \
 	-std=c++20 -O3 -fstack-size-section -fvisibility=hidden \
 	-ffunction-sections -fdata-sections -fno-stack-protector -fno-exceptions \
 	-fms-extensions -fwritable-strings -Werror=return-type \

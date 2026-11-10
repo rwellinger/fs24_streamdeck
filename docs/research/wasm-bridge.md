@@ -17,7 +17,7 @@ Answers to the open questions of `.claude/tasks/M03-wasm-bridge.md`. Researched 
 - Flags are taken from the SDK's MSBuild toolset (`WASM/vs/2022/Microsoft.Cpp.MSFS.Common.targets`), see `wasm/Makefile`. Deviations:
   - `--stack-guard-page` is an Asobo-patched `wasm-ld` option, unknown to stock lld → dropped.
   - Edit-and-continue options (`--eac-*`) dropped.
-  - Newer clang enables more WASM features by default (reference-types, multivalue, …). We pin `-mcpu=mvp -msign-ext -mmutable-globals -mbulk-memory` = the feature set the SDK's clang 15 emits. Verified via the `target_features` section.
+  - Newer clang enables more WASM features by default (sign-ext, mutable-globals, reference-types, multivalue, …). The MSFS runtime accepts **MVP + bulk-memory only**: `MSFS_WasmVersions.a` (Asobo's 2024 toolchain) and the MobiFlight module carry just `bulk-memory` in `target_features`, Navigraph's `cargo-msfs` builds with `+bulk-memory` and runs `wasm-opt --signext-lowering`. We pin `-mcpu=mvp -mbulk-memory`; a 0.1.0/0.1.1 build with sign-ext + mutable-globals showed `Status: FAILED` in WASM Debug. Check: `wasm-validate --disable-sign-extension --disable-mutable-globals --disable-saturating-float-to-int <wasm>`.
 - `MSFS_WasmVersions.a` must be linked (exports `GetSimConnectVersion` / `GetExtensionVersion*`); without it the module is treated as a 2020 module.
 - Status: a test module with SimConnect + ClientData + `execute_calculator_code` + `fsEventsRegisterHEvent` links cleanly on the Mac. **Loader acceptance by the sim: pending (PING test).**
 
