@@ -27,4 +27,8 @@ Graphic AAO gauges (hover vector, bambi bucket, hoist cable, slider art) become 
 
 - [x] RPN evaluator covers every `S:` / visibility expression of the AAO profile (script check against the inventory: 141/142; the wind-rose rotation `ddiff` is replaced by `wind-display`).
 - [ ] `var-state`, `wind-display`, long press, display press work against the live sim (H145 loaded).
+  - [x] `var-state` follows `L:H145_SDK_DOOR_COCKPIT_L` (gray → amber "DOOR L / OPEN"), press fires the H:-event (sim PC + XL, 2026-11-10)
+  - [x] `command` long press: short = left door, held ≥ 500 ms = right door, no short fire on hold (2026-11-10)
+  - [ ] `var-display` press + auto-repeat (`H:MFD1_SoftKey_LUM_UP`, value `A:LIGHT POTENTIOMETER:9, Percent` climbs while held)
+  - [ ] `wind-display` heading-up (arrow turns with the aircraft)
 - [x] `make check` green.
