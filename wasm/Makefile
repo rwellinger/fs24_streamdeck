@@ -30,6 +30,7 @@ LDFLAGS20 := --no-entry --allow-undefined --export-dynamic \
 	--export malloc --export free --export __wasm_call_ctors --export-table \
 	--export mallinfo --export mchunkit_begin --export mchunkit_next \
 	--export get_pages_state --export mark_decommit_pages \
+	--stack-first -z stack-size=1048576 \
 	--strip-debug --gc-sections -O3 -L$(LIBDIR)
 LIBS20    := -lc++ -lc++abi -lc $(LIBDIR)/libclang_rt.builtins-wasm32.a -lc
 
