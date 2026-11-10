@@ -24,8 +24,9 @@ Answers to the open questions of `.claude/tasks/M03-wasm-bridge.md`. Researched 
 ## 3. Packaging
 
 - A Community package is a folder: `manifest.json`, `layout.json`, `modules/<name>.wasm`. Standalone modules in `modules/` are loaded at sim start (no gauge, no panel.cfg).
-- `layout.json` = inventory of every file except itself: `{ "content": [ { "path", "size", "date" } ] }`, `date` = Windows FILETIME (100 ns ticks since 1601-01-01 UTC), as FlyByWire's build scripts write it.
-- The core SDK contains no manifest/layout schema (the Package Builder generates them). Field set follows the established 2020 format. **To verify against a real 2024 package from the sim PC.**
+- `layout.json` = inventory of the payload files only — **not** `manifest.json`, not itself: `{ "content": [ { "path", "size", "date" } ] }`, `date` = Windows FILETIME (100 ns ticks since 1601-01-01 UTC).
+- `manifest.json`: `dependencies`, `content_type: "MISC"`, `title`, `manufacturer`, `creator`, `package_version`, `minimum_game_version`, `release_notes.neutral.{LastUpdate,OlderHistory}` — no `total_package_size`.
+- The core SDK contains no manifest/layout schema (the Package Builder generates them). Reference: the Package-Builder-built MobiFlight event module 1.0.1 release zip. v0.1.0 listed `manifest.json` in `layout.json` and had `total_package_size` → did not load (PING timeout, no console line); fixed in 0.1.1.
 - `scripts/build-bridge-package.ts` (`make wasm-package`) generates both — no `fspackagetool`.
 
 ## 4. H:-events

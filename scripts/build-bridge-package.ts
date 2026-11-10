@@ -37,31 +37,24 @@ function walk(dir: string): string[] {
 	);
 }
 
-function manifest(totalSize: number): string {
-	return `${JSON.stringify(
-		{
-			dependencies: [],
-			content_type: "MISC",
-			title: "fs24 Stream Deck Bridge",
-			manufacturer: "",
-			creator: "thWelly",
-			package_version: VERSION,
-			minimum_game_version: "1.0.0",
-			release_notes: { neutral: { LastUpdate: "", OlderHistory: "" } },
-			// Fixed width keeps manifest.json's own size stable across both passes.
-			total_package_size: totalSize.toString().padStart(20, "0"),
-		},
-		null,
-		2,
-	)}\n`;
-}
+// Format follows packages built by Asobo's Package Builder (reference:
+// MobiFlight event module 1.0.1): layout.json lists payload files only —
+// neither manifest.json nor itself — and the manifest has no total size.
+const manifest = {
+	dependencies: [],
+	content_type: "MISC",
+	title: "fs24 Stream Deck Bridge",
+	manufacturer: "",
+	creator: "thWelly",
+	package_version: VERSION,
+	minimum_game_version: "1.0.0",
+	release_notes: { neutral: { LastUpdate: "", OlderHistory: "" } },
+};
 
 const wasm = join(WASM_DIR, "build", `${NAME}.wasm`);
 rmSync(PKG, { recursive: true, force: true });
 mkdirSync(join(PKG, "modules"), { recursive: true });
 copyFileSync(wasm, join(PKG, "modules", `${NAME}.wasm`));
-const total = statSync(wasm).size + Buffer.byteLength(manifest(0));
-writeFileSync(join(PKG, "manifest.json"), manifest(total));
 
 const content = walk(PKG)
 	.map((file) => {
@@ -74,5 +67,6 @@ const content = walk(PKG)
 	})
 	.sort((a, b) => a.path.localeCompare(b.path));
 
+writeFileSync(join(PKG, "manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
 writeFileSync(join(PKG, "layout.json"), `${JSON.stringify({ content }, null, 2)}\n`);
-console.log(`${NAME} ${VERSION} → ${relative(ROOT, PKG)} (${total} bytes)`);
+console.log(`${NAME} ${VERSION} → ${relative(ROOT, PKG)}`);
