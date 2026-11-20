@@ -100,14 +100,14 @@ function tokenize(src: string): ParseResult<string[]> {
 
 /**
  * Accepts plain RPN, AAO's `(S:<rpn>)` wrapper, or a bare var path
- * (`L:name`, `A:NAME, unit`) as shorthand for that single var.
+ * (`L:name`, `A:NAME, unit`, `B:name`) as shorthand for that single var.
  */
 export function compileRpn(raw: string): ParseResult<RpnProgram> {
 	let src = raw.trim();
 	const wrapped = /^\(S:([\s\S]*)\)$/i.exec(src);
 	if (wrapped) src = wrapped[1].trim();
 	if (!src) return { ok: false, error: "empty expression" };
-	if (!src.startsWith("(") && /^[AL]:/i.test(src)) src = `(${src})`;
+	if (!src.startsWith("(") && /^[ALB]:/i.test(src)) src = `(${src})`;
 
 	const tokens = tokenize(src);
 	if (!tokens.ok) return tokens;
@@ -154,7 +154,7 @@ function parseToken(tok: string, vars: Map<string, VarPath>): ParseResult<Op> {
 	if (tok.startsWith("(")) {
 		const inner = tok.slice(1, -1).trim();
 		if (inner.startsWith(">")) return { ok: false, error: `writes are not allowed: ${tok}` };
-		if (!/^[AL]:/i.test(inner)) return { ok: false, error: `unsupported var ${tok}` };
+		if (!/^[ALB]:/i.test(inner)) return { ok: false, error: `unsupported var ${tok}` };
 		const parsed = parseVarPath(inner);
 		if (!parsed.ok) return parsed;
 		if (!vars.has(parsed.path.key)) vars.set(parsed.path.key, parsed.path);

@@ -16,7 +16,10 @@
  * - AAO images are third-party art: never copied. Tiles are rendered by the
  *   plugin; native Stream Deck actions keep their title only.
  *
- *   npx tsx scripts/convert-aao.ts <profile.streamDeckProfile> <scripts.xml> [out.streamDeckProfile]
+ * - Profile switches (`profile.rotate`) point at profiles outside this one and
+ *   are dropped; page navigation inside the profile is kept.
+ *
+ *   npx tsx scripts/convert-aao.ts <h145|kodiak> <profile.streamDeckProfile> <scripts.xml> [out.streamDeckProfile]
  */
 
 import { createHash } from "node:crypto";
@@ -28,9 +31,26 @@ import { compileRpn } from "../src/util/rpn";
 import { parseRules, parseTemplate } from "../src/util/state-rules";
 
 const PLUGIN_UUID = "com.robertw.fs24";
-const SCRIPT_GROUP = "HYPE_H145";
-const PROFILE_NAME = "H145 (fs24)";
-const DEFAULT_OUT = "profiles/H145.streamDeckProfile";
+
+const AIRCRAFT = {
+	h145: {
+		scriptGroup: "HYPE_H145",
+		profileName: "H145 (fs24)",
+		out: "profiles/H145.streamDeckProfile",
+		stripPrefix: /^(H145_SDK_|HYPE_H145-|MISC[ _]|APCP_|AP[ _]|ELEC_|INT LIGHTS_)/i,
+	},
+	kodiak: {
+		scriptGroup: "SWS KODIAK",
+		profileName: "Kodiak (fs24)",
+		out: "profiles/Kodiak.streamDeckProfile",
+		stripPrefix: /^(SWS_KODIAK_|SWS KODIAK-|KODIAKAC_|KODIAK_|XMLVAR_|ECS |MISC[ _])/i,
+	},
+} as const;
+
+let SCRIPT_GROUP = "";
+let SCRIPT_GROUP_RE = "";
+let PROFILE_NAME = "";
+let STRIP_PREFIX: RegExp = /^$/;
 
 type Json = Record<string, unknown>;
 type Mapped = { uuid: string; settings: Json; title?: string };
@@ -82,7 +102,7 @@ function inlineScript(label: string, depth = 0): string {
 		return body;
 	}
 	let out = body.replace(
-		new RegExp(`(?:-?\\d+(?:\\.\\d+)?\\s+)?\\(>K:${SCRIPT_GROUP}-([^)]+)\\)`, "g"),
+		new RegExp(`(?:-?\\d+(?:\\.\\d+)?\\s+)?\\(>K:${SCRIPT_GROUP_RE}-([^)]+)\\)`, "g"),
 		(_, inner: string) => {
 			note(`inlined nested script "${inner.trim()}"`);
 			return inlineScript(inner, depth + 1);
@@ -103,7 +123,7 @@ function pressAction(raw: unknown, value: unknown = "1"): string | undefined {
 	const s = squash(str(raw));
 	if (!s || s === "0") return undefined;
 	let out: string;
-	const script = new RegExp(`^\\(>K:${SCRIPT_GROUP}-(.+)\\)$`).exec(s);
+	const script = new RegExp(`^\\(>K:${SCRIPT_GROUP_RE}-(.+)\\)$`).exec(s);
 	const h = /^\(>H:([^,)]+?)\s*(?:,[^)]*)?\)$/.exec(s);
 	const k = /^\(>K:([^,)]+?)\s*(?:,[^)]*)?\)$/.exec(s);
 	const rpn = /^\(>S:([\s\S]*)\)$/.exec(s);
@@ -116,7 +136,11 @@ function pressAction(raw: unknown, value: unknown = "1"): string | undefined {
 		const v = str(value);
 		out = v && v !== "0" ? `K:${k[1]} ${v}` : `K:${k[1]}`;
 	} else if (rpn) out = `RPN:${squash(rpn[1])}`;
-	else {
+	else if (/^\(>[LB]:[^()]+\)$/i.test(s)) {
+		// var write or B: binding with no matching state var → the bridge runs it
+		out = `RPN:${str(value) || "1"} ${normB(s)}`;
+		note(`"${s}" → ${out} (via WASM bridge)`);
+	} else {
 		fail(`unrecognised event "${s}"`);
 		return undefined;
 	}
@@ -130,7 +154,34 @@ function readRpn(raw: unknown): string | undefined {
 	const s = squash(str(raw));
 	if (!s || /^\(L:DummyVar\)$/i.test(s) || /^\(A:\s*,/.test(s)) return undefined;
 	const m = /^\(S:([\s\S]*)\)$/.exec(s);
-	return m ? squash(m[1]) : s;
+	return normB(m ? squash(m[1]) : s);
+}
+
+/** AAO writes units on B: vars (`(B:NAME, Bool)`); B: input events take none. */
+function normB(rpn: string): string {
+	return rpn.replace(/\((>?)B:([^,()]+?)\s*,[^()]*\)/gi, "($1B:$2)");
+}
+
+/**
+ * Var the AAO event writes directly: `(>L:x, unit)` / `(>B:x)`, or the B: input
+ * event behind a `(>B:X_ON|_OFF|_TOGGLE)` binding when it equals `stateVar`.
+ */
+function directWrite(raw: unknown, stateVar: string): boolean {
+	const s = normB(squash(str(raw)));
+	const m = /^\(>([LB]:[^()]+)\)$/i.exec(s);
+	if (!m) return false;
+	const key = (p: string) => {
+		const r = parseVarPath(p);
+		return r.ok ? r.path.key.toUpperCase() : undefined;
+	};
+	const state = key(stateVar);
+	if (key(m[1]) === state) return true;
+	const binding = /^B:(.+)_(ON|OFF|TOGGLE)$/i.exec(m[1]);
+	return !!binding && key(`B:${binding[1]}`) === state;
+}
+
+function varLabel(varPath: string | undefined): string {
+	return labelFrom(varPath?.replace(/^[LB]:(1:)?/, "").replace(/,.*$/, ""));
 }
 
 /** Plain var path (`L:X, Number`) when the read is a single variable, else undefined. */
@@ -147,8 +198,6 @@ function checkRpn(rpn: string, what: string): boolean {
 }
 
 // ---------------------------------------------------------------- labels
-
-const STRIP_PREFIX = /^(H145_SDK_|HYPE_H145-|MISC[ _]|APCP_|AP[ _]|ELEC_|INT LIGHTS_)/i;
 
 /** Label from the raw AAO event: the script label for script calls, else the event name. */
 function eventLabel(raw: unknown): string {
@@ -218,13 +267,38 @@ function mapEvent(s: Json, title: string): Mapped {
 	return { uuid: "command", settings, title: title || eventLabel(s.simevt) };
 }
 
+/** Toggle whose state is an expression, not a var → var-state lit while it is true. */
+function mapExpressionToggle(read: string, s: Json, title: string): Mapped {
+	checkRpn(read, "toggle state");
+	note(`toggle state "${read}" is an expression → var-state`);
+	const label = title || eventLabel(s.simevt);
+	count("var-state");
+	return {
+		uuid: "var-state",
+		settings: {
+			...pressSettings(s),
+			title: "",
+			text: label.replace(/\n/g, "\\n"),
+			states: `${read} | green | ${label.replace(/\n/g, "\\n")}`,
+		},
+	};
+}
+
 function mapToggle(s: Json, title: string): Mapped {
 	const read = readRpn(s.simvar);
 	const varPath = read && plainVar(read);
+	if (read && !varPath && !read.includes("|")) return mapExpressionToggle(read, s, title);
 	if (!varPath) fail(`toggle state "${str(s.simvar)}" is not a plain variable`);
-	const event = pressAction(s.simevt, s.onevtval);
 	const valueOn = str(s.onvarval) || "1";
+	const staticLabel = (title || eventLabel(s.simevt) || varLabel(varPath)).replace(/\n/g, " ");
 	count("var-toggle");
+	if (varPath && directWrite(s.simevt, varPath)) {
+		return {
+			uuid: "var-toggle",
+			settings: { varPath, triggerMode: "write", valueOn, valueOff: "0", staticLabel },
+		};
+	}
+	const event = pressAction(s.simevt, s.onevtval);
 	return {
 		uuid: "var-toggle",
 		settings: {
@@ -234,9 +308,7 @@ function mapToggle(s: Json, title: string): Mapped {
 			valueOn,
 			valueOff: "0",
 			strictOnMatch: valueOn !== "1",
-			staticLabel: (
-				title || labelFrom(varPath?.replace(/^L:/, "").replace(/,.*$/, ""))
-			).replace(/\n/g, " "),
+			staticLabel,
 		},
 	};
 }
@@ -245,9 +317,24 @@ function mapOnOff(s: Json, title: string): Mapped {
 	const read = readRpn(s.simvar);
 	const varPath = read && plainVar(read);
 	if (!varPath) fail(`on/off state "${str(s.simvar)}" is not a plain variable`);
+	const staticLabel = (title || eventLabel(s.onsimevt) || varLabel(varPath)).replace(/\n/g, " ");
+	count("var-toggle");
+	if (varPath && directWrite(s.onsimevt, varPath) && directWrite(s.offsimevt, varPath)) {
+		const binding = /^\(>B:.+_ON\)$/i.test(squash(str(s.onsimevt)));
+		return {
+			uuid: "var-toggle",
+			settings: {
+				varPath,
+				triggerMode: "write",
+				valueOn: binding ? "1" : str(s.onevtval) || "1",
+				valueOff: binding ? "0" : str(s.offevtval) || "0",
+				strictOnMatch: true,
+				staticLabel,
+			},
+		};
+	}
 	const eventOn = pressAction(s.onsimevt, s.onevtval);
 	const eventOff = pressAction(s.offsimevt, s.offevtval);
-	count("var-toggle");
 	return {
 		uuid: "var-toggle",
 		settings: {
@@ -258,7 +345,7 @@ function mapOnOff(s: Json, title: string): Mapped {
 			valueOn: str(s.onvarval) || "1",
 			valueOff: str(s.offevtval) || "0",
 			strictOnMatch: true,
-			staticLabel: (title || eventLabel(s.onsimevt)).replace(/\n/g, " "),
+			staticLabel,
 		},
 	};
 }
@@ -278,7 +365,7 @@ function mapGauge(kind: string, s: Json, title: string): Mapped {
 	const press = pressSettings(s);
 	if (str(s.altsimvar)) note(`${kind}: second value "${str(s.altsimvar)}" dropped`);
 	if (kind !== "gaugetext") note(`${kind}: needle/slider graphic → number`);
-	const label = title.replace(/\n/g, " ");
+	const label = (title || varLabel(read && plainVar(read))).replace(/\n/g, " ");
 	if (!read) {
 		fail(`${kind} without a value`);
 		return { uuid: "var-display", settings: { ...press, varPath: "", label } };
@@ -330,6 +417,7 @@ function layerStyle(layer: Json): string {
 
 function layerWords(layer: Json): string {
 	return str(layer.header)
+		.replace(/(?<=\w)back$/i, "")
 		.split(/\s+/)
 		.filter((w) => w && !NOISE_WORDS.has(w.toLowerCase()))
 		.join(" ")
@@ -340,8 +428,8 @@ function layerCondition(layer: Json): string | undefined {
 	const v = squash(str(layer.visivar));
 	if (!v) return undefined;
 	const s = /^\(S:([\s\S]*)\)$/.exec(v);
-	if (s) return squash(s[1]);
-	return `${v} ${str(layer.visival) || "0"} ==`;
+	if (s) return normB(squash(s[1]));
+	return normB(`${v} ${str(layer.visival) || "0"} ==`);
 }
 
 function mapMultigauge(s: Json, title: string): Mapped {
@@ -380,6 +468,10 @@ function mapMultigauge(s: Json, title: string): Mapped {
 		if (!raw || raw.startsWith("TXT:")) continue;
 		const rpn = readRpn(raw);
 		if (!rpn) continue;
+		if (rpn.includes("'") || /,\s*String\)/i.test(rpn)) {
+			note(`text "${str(t.header)}": string value ${rpn} dropped`);
+			continue;
+		}
 		const expr = scaled(rpn, t.multiplier, t.varoffset);
 		if (!checkRpn(expr, `text "${str(t.header)}"`)) continue;
 		values.push(`{${expr}|%.${str(t.fractions) || "0"}f}`);
@@ -446,7 +538,7 @@ function mapMultigauge(s: Json, title: string): Mapped {
 }
 
 function mapAao(uuid: string, s: Json, title: string): Mapped | undefined {
-	switch (uuid.replace("com.lorby-si.aao.", "")) {
+	switch (uuid.replace(/^com\.lorby-?si\.aao\./, "")) {
 		case "event":
 			return mapEvent(s, title);
 		case "toggle":
@@ -456,7 +548,7 @@ function mapAao(uuid: string, s: Json, title: string): Mapped | undefined {
 		case "gaugetext":
 		case "steamgauge":
 		case "slidergauge":
-			return mapGauge(uuid.replace("com.lorby-si.aao.", ""), s, title);
+			return mapGauge(uuid.replace(/^com\.lorby-?si\.aao\./, ""), s, title);
 		case "multigauge":
 			return mapMultigauge(s, title);
 		default:
@@ -477,14 +569,21 @@ function convertAction(action: Json, plugin: PluginManifest): boolean {
 	const title = titleOf(action);
 	const states = (Array.isArray(action.States) ? action.States : []) as Json[];
 
+	if (uuid === "com.elgato.streamdeck.profile.rotate") {
+		report.dropped.push(`[${where}] profile switch "${title}" — points outside this profile`);
+		return false;
+	}
 	if (uuid.startsWith("com.elgato.streamdeck.")) {
 		for (const st of states) delete st.Image;
 		count(`native ${uuid.replace("com.elgato.streamdeck.", "")}`);
-		if (uuid.endsWith("profile.rotate"))
-			note("profile switch points at a profile outside this one");
 		return true;
 	}
-	const mapped = mapAao(uuid, (action.Settings ?? {}) as Json, title);
+	const settings = (action.Settings ?? {}) as Json;
+	if (/aao\.event$/.test(uuid) && !str(settings.simevt) && !str(settings.longsimevt)) {
+		report.dropped.push(`[${where}] image-only AAO button "${title}" — no event`);
+		return false;
+	}
+	const mapped = mapAao(uuid, settings, title);
 	if (!mapped) {
 		report.dropped.push(
 			`[${where}] ${uuid} "${title}" — no equivalent (AAO virtual joystick button)`,
@@ -519,14 +618,19 @@ function profileUuid(): string {
 }
 
 function main(): void {
-	const [, , profileArg, scriptsArg, outArg] = process.argv;
-	if (!profileArg || !scriptsArg) {
+	const [, , aircraftArg, profileArg, scriptsArg, outArg] = process.argv;
+	const aircraft = AIRCRAFT[aircraftArg as keyof typeof AIRCRAFT];
+	if (!aircraft || !profileArg || !scriptsArg) {
 		console.error(
-			"Usage: npx tsx scripts/convert-aao.ts <profile.streamDeckProfile> <scripts.xml> [out]",
+			`Usage: npx tsx scripts/convert-aao.ts <${Object.keys(AIRCRAFT).join("|")}> <profile.streamDeckProfile> <scripts.xml> [out]`,
 		);
 		process.exit(2);
 	}
-	const outPath = outArg ?? DEFAULT_OUT;
+	SCRIPT_GROUP = aircraft.scriptGroup;
+	SCRIPT_GROUP_RE = SCRIPT_GROUP.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+	PROFILE_NAME = aircraft.profileName;
+	STRIP_PREFIX = aircraft.stripPrefix;
+	const outPath = outArg ?? aircraft.out;
 	scripts = loadScripts(readFileSync(scriptsArg, "utf8"));
 	const plugin = JSON.parse(
 		readFileSync("com.robertw.fs24.sdPlugin/manifest.json", "utf8"),
@@ -538,9 +642,16 @@ function main(): void {
 	let buttons = 0;
 
 	for (const [path, bytes] of Object.entries(zip)) {
+		if (path === "package.json") {
+			// Stream Deck 7 export format: top-level package.json + Profiles/<root>.sdProfile/
+			const pkg = JSON.parse(new TextDecoder().decode(bytes)) as Json;
+			pkg.RequiredPlugins = [PLUGIN_UUID, "com.elgato.streamdeck.page"];
+			out[path] = new TextEncoder().encode(JSON.stringify(pkg));
+			continue;
+		}
 		if (!path.endsWith("/manifest.json")) continue; // images (third-party art) and .bak files stay out
 		const manifest = JSON.parse(new TextDecoder().decode(bytes)) as Json;
-		const target = path.replace(/^[^/]+\.sdProfile\//, `${newRoot}/`);
+		const target = path.replace(/^(Profiles\/)?[^/]+\.sdProfile\//, `$1${newRoot}/`);
 		if (Array.isArray(manifest.Controllers)) {
 			const page = path.split("/").at(-2) ?? path;
 			for (const ctl of manifest.Controllers as Json[]) {
