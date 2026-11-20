@@ -61,6 +61,8 @@ type Pending = {
 	longFired: boolean;
 	repeatDelay?: NodeJS.Timeout;
 	repeatInterval?: NodeJS.Timeout;
+	repeatCount: number;
+	repeatStart: number;
 };
 
 /** Per-key press handling: short / long press and auto-repeat while held. */
@@ -74,7 +76,7 @@ export class PressController<T extends JsonObject> {
 
 	async down(action: KeyAction<T>, config: PressConfig): Promise<void> {
 		this.cancel(action.id);
-		const p: Pending = { config, longFired: false };
+		const p: Pending = { config, longFired: false, repeatCount: 0, repeatStart: 0 };
 		this.pending.set(action.id, p);
 		if (config.long) {
 			const long = config.long;
@@ -103,6 +105,11 @@ export class PressController<T extends JsonObject> {
 		clearTimeout(p.repeatDelay);
 		clearInterval(p.repeatInterval);
 		this.pending.delete(actionId);
+		if (p.repeatStart > 0) {
+			streamDeck.logger.info(
+				`${this.logName}: repeat stopped: ${describePressAction(p.config.short)} ×${p.repeatCount} in ${Date.now() - p.repeatStart} ms`,
+			);
+		}
 	}
 
 	cancelAll(): void {
@@ -112,7 +119,12 @@ export class PressController<T extends JsonObject> {
 	private startRepeat(p: Pending): void {
 		const press = p.config.short;
 		p.repeatDelay = setTimeout(() => {
+			p.repeatStart = Date.now();
+			streamDeck.logger.info(
+				`${this.logName}: repeat started: ${describePressAction(press)}`,
+			);
 			p.repeatInterval = setInterval(() => {
+				p.repeatCount++;
 				this.sim
 					.fire(press)
 					.catch((err) =>
