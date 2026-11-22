@@ -51,7 +51,7 @@ type VarSwitchSettings = JsonObject &
 		eventUp?: string;
 		eventDown?: string;
 		labels?: string;
-		hideShortConfirmation?: boolean;
+		showShortConfirmation?: boolean;
 		hideEndstopAlert?: boolean;
 		staticLabel?: string;
 		staticLabelPosition?: SwitchLabelPosition;
@@ -203,7 +203,7 @@ export class VarSwitch extends VarAction<VarSwitchSettings, State> {
 			streamDeck.logger.info(
 				`var-switch: ${kind} ${current} → ${target} (${mode ?? "write"})`,
 			);
-			if (kind === "short" && s.hideShortConfirmation !== true) await state.action.showOk();
+			if (kind === "short" && s.showShortConfirmation === true) await state.action.showOk();
 		} catch (err) {
 			streamDeck.logger.error(`var-switch: ${kind} step failed`, err);
 			await state.action.showAlert();

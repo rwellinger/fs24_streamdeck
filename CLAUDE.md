@@ -93,7 +93,7 @@ fs24_streamdeck/
 ## Action Implementation Conventions (inherited from xp_streamdeck)
 
 - **Settings type:** `type FooSettings = JsonObject & { … }`; `JsonObject` comes from `@elgato/utils`.
-- **Feedback on `keyDown`:** `showOk()` on success (optionally opt-out), `showAlert()` on **every** failure path including empty/invalid config. Never gate `showAlert()` behind a setting.
+- **Feedback on `keyDown`:** `showOk()` on success only when the user opts in (`showConfirmation`, default off), `showAlert()` on **every** failure path including empty/invalid config. Never gate `showAlert()` behind a setting.
 - **Checkboxes:** unchecked = baseline, checked = opt-in deviation; test with `=== true`.
 - **PI** lives in `com.robertw.fs24.sdPlugin/ui/<action>.html`, sdpi-components v4 from `https://sdpi-components.dev/releases/v4/sdpi-components.js`.
 - **No floating promises** (Biome `noFloatingPromises`). `.catch((err) => streamDeck.logger.error(...))` or `await`.
