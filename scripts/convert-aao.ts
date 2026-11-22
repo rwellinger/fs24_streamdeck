@@ -8,8 +8,9 @@
 
 /*
  * Convert an Axis and Ohs (AAO) `.streamDeckProfile` into a profile for this
- * plugin. One-shot tool: the result is reworked by hand in the Stream Deck app
- * afterwards and committed — rerunning overwrites that rework.
+ * plugin. Starting point for a new aircraft only: once a profile is in
+ * profiles/ it is maintained by hand in the Stream Deck app (sync-profiles
+ * export). Output goes to out/profiles/ and never overwrites an existing file.
  *
  * - `(>K:<group>-<label>)` is an AAO script call; it is resolved against the
  *   script XML (nested calls inlined, `(WAIT:n)` removed and reported).
@@ -23,7 +24,7 @@
  */
 
 import { createHash } from "node:crypto";
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { unzipSync, zipSync } from "fflate";
 import { parsePressAction, parseVarPath } from "../src/sim/path";
@@ -36,13 +37,13 @@ const AIRCRAFT = {
 	h145: {
 		scriptGroup: "HYPE_H145",
 		profileName: "H145 (fs24)",
-		out: "profiles/H145.streamDeckProfile",
+		out: "out/profiles/H145.streamDeckProfile",
 		stripPrefix: /^(H145_SDK_|HYPE_H145-|MISC[ _]|APCP_|AP[ _]|ELEC_|INT LIGHTS_)/i,
 	},
 	kodiak: {
 		scriptGroup: "SWS KODIAK",
 		profileName: "Kodiak (fs24)",
-		out: "profiles/Kodiak.streamDeckProfile",
+		out: "out/profiles/Kodiak.streamDeckProfile",
 		stripPrefix: /^(SWS_KODIAK_|SWS KODIAK-|KODIAKAC_|KODIAK_|XMLVAR_|ECS |MISC[ _])/i,
 	},
 } as const;
@@ -631,6 +632,10 @@ function main(): void {
 	PROFILE_NAME = aircraft.profileName;
 	STRIP_PREFIX = aircraft.stripPrefix;
 	const outPath = outArg ?? aircraft.out;
+	if (existsSync(outPath)) {
+		console.error(`${outPath} exists — refusing to overwrite (hand-maintained profiles live in profiles/).`);
+		process.exit(1);
+	}
 	scripts = loadScripts(readFileSync(scriptsArg, "utf8"));
 	const plugin = JSON.parse(
 		readFileSync("com.robertw.fs24.sdPlugin/manifest.json", "utf8"),
