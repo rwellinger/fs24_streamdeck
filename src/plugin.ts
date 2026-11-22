@@ -8,6 +8,7 @@
 
 import streamDeck from "@elgato/streamdeck";
 
+import { Background } from "./actions/background";
 import { SimCommand } from "./actions/command";
 import { VarDisplay } from "./actions/var-display";
 import { VarLamp } from "./actions/var-lamp";
@@ -35,6 +36,7 @@ streamDeck.actions.registerAction(new VarSwitch(sim));
 streamDeck.actions.registerAction(new VarLamp(sim));
 streamDeck.actions.registerAction(new VarState(sim));
 streamDeck.actions.registerAction(new WindDisplay(sim));
+streamDeck.actions.registerAction(new Background());
 installProbeHandler(sim);
 installBridgeInstallHandler(sim);
 
