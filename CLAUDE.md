@@ -23,18 +23,21 @@ Sibling project: `~/Workspace/x-plane/xp_streamdeck` (X-Plane 12). Sim-agnostic 
 - **Target:** Windows 10/11 (sim PC). The manifest also lists macOS — only so the plugin runs in the Mac dev loop, not a supported end-user platform. MSFS 2024 is the **Microsoft Store** edition.
 - **Plugin UUID:** `com.robertw.fs24` → bundle `com.robertw.fs24.sdPlugin/`
 
-## Development Setup — the sim PC stays clean
+## Development Setup — nothing installed on the sim PC
 
 | Task | Where |
 |---|---|
-| Write / build / lint TS plugin | Mac |
-| Run the plugin against the live sim | `make gh-build` → install the artefact on the sim PC (preferred). Protocol checks: tsx scripts from the Mac over SimConnect TCP (port 502) |
+| Write / build / lint TS plugin | Mac (`make …`) or the sim PC (`scripts\windows\*.cmd`, see below) |
+| Run the plugin against the live sim | sim PC: `scripts\windows\deploy.cmd` (once with `-Link`), or `make gh-build` → install the artefact. Protocol checks: tsx scripts locally (`node.cmd npx tsx …`) or from the Mac over SimConnect TCP (port 502) |
+| Profiles | sim PC: build in the Stream Deck app → `sync-profiles.cmd export` → commit `profiles/*.streamDeckProfile`; `import` restores them |
 | Compile WASM bridge | GitHub Actions Windows runner with the SDK's own LLVM (`make gh-build`) — the only build the sim loads. Mac `make wasm` (Homebrew LLVM) = compile check only |
 | Package the WASM module | script-generated `layout.json` / `manifest.json` (`scripts/build-bridge-package.ts`), no `fspackagetool` |
 | Debug WASM | MSFS Developer Mode console |
 | Final acceptance | sim PC: double-click `.streamDeckPlugin`, like a normal user |
 
-**No Node, Visual Studio, MSFS SDK or any dev tool gets installed on the sim PC.** The only allowed changes there: SimConnect remote-access config (`SimConnect.xml`) plus a firewall rule, and installing the release artefacts.
+**No Node, Visual Studio, MSFS SDK or any dev tool gets installed on the sim PC.** The only allowed changes there: SimConnect remote-access config (`SimConnect.xml`) plus a firewall rule, installing the release artefacts, and the repo checkout with its portable tools.
+
+Windows scripts (`scripts\windows\`, ported from xp_streamdeck; no make): `node.ps1` downloads a portable Node (major from `.nvmrc`, SHA-256 checked) into the gitignored `.tools/` and runs any npm/npx/node command with it — PATH changes only for that process. `deploy`, `icons` and `sync-profiles export|import` build on it; each has a `.cmd` launcher that bypasses the execution policy. `wasm` / `sdk` stay on CI.
 
 MS Store paths:
 - `SimConnect.xml`: `%LOCALAPPDATA%\Packages\Microsoft.Limitless_8wekyb3d8bbwe\LocalCache\SimConnect.xml` (verified M01). Ships with a pipe, IPv4 `500` and IPv6 `501` entry (local scope). Remote dev access = additional global IPv4 entry on `502`. A plugin on the sim PC connects locally with no config (node-simconnect autodetect).
