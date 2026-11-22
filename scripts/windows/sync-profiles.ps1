@@ -25,9 +25,9 @@
 #>
 [CmdletBinding()]
 param(
-	[Parameter(Mandatory = $true, Position = 0)]
-	[ValidateSet("export", "import")]
-	[string]$Command,
+	[Parameter(Position = 0)]
+	[ValidateSet("export", "import", "")]
+	[string]$Command = "",
 
 	# Non-interactive pick: "all" or e.g. "1,3".
 	[string]$Select = "",
@@ -211,7 +211,7 @@ function Select-Targets($targets, [string]$verb) {
 		}
 	}
 	while ($true) {
-		$answer = if ($Select -ne "") { $Select } else { Read-Host "`nWhich profiles to $verb? (e.g. 3, or 1,3,5, or 'all')" }
+		$answer = if ($Select -ne "") { $Select } else { Read-Host "`nWhich profiles to ${verb}? (e.g. 3, or 1,3,5, or 'all')" }
 		$trimmed = $answer.Trim().ToLowerInvariant()
 		if ($trimmed -in @("", "abort", "q")) {
 			Write-Host "Aborted - nothing to $verb."
@@ -345,6 +345,13 @@ function Import-Profiles {
 	$skipNote = if ($skipped -gt 0) { ", skipped $skipped (unreadable)" } else { "" }
 	Write-Host "`nImported $imported profile(s)$skipNote -> $ProfilesDir"
 	Start-StreamDeck
+}
+
+if ($Command -eq "") {
+	Write-Host "Usage: sync-profiles export|import [-Select `"1,3`" | all]"
+	Write-Host "  export  Stream Deck app -> profiles\  (profiles named `"*$ProfileNameSuffix`")"
+	Write-Host "  import  profiles\ -> Stream Deck app"
+	exit 2
 }
 
 try {
