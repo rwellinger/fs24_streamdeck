@@ -11,14 +11,15 @@
  * the aircraft is encrypted and has no AAO profile to convert. Vars come from
  * docs/research/lama-inventory.md. One page, Stream Deck XL (8 × 4).
  *
- * One-shot starting point: the committed profile was reworked by hand in the
- * Stream Deck app afterwards (icons, order) — rerunning overwrites that rework.
+ * One-shot starting point: profiles/Lama.streamDeckProfile is maintained by hand
+ * in the Stream Deck app (sync-profiles export). Output goes to out/profiles/
+ * and never overwrites an existing file.
  *
  *   npx tsx scripts/build-lama-profile.ts [out.streamDeckProfile]
  */
 
 import { createHash } from "node:crypto";
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { zipSync } from "fflate";
 import { parsePressAction, parseVarPath } from "../src/sim/path";
@@ -26,7 +27,7 @@ import { parseRules } from "../src/util/state-rules";
 
 const PLUGIN_UUID = "com.robertw.fs24";
 const PROFILE_NAME = "Lama SA315B (fs24)";
-const DEFAULT_OUT = "profiles/Lama.streamDeckProfile";
+const DEFAULT_OUT = "out/profiles/Lama.streamDeckProfile";
 const XL_MODEL = "20GAT9901";
 
 type Json = Record<string, unknown>;
@@ -326,6 +327,10 @@ function buildAction(b: Button, col: number, row: number, plugin: PluginManifest
 
 function main(): void {
 	const outPath = process.argv[2] ?? DEFAULT_OUT;
+	if (existsSync(outPath)) {
+		console.error(`${outPath} exists — refusing to overwrite (hand-maintained profiles live in profiles/).`);
+		process.exit(1);
+	}
 	const plugin = JSON.parse(
 		readFileSync("com.robertw.fs24.sdPlugin/manifest.json", "utf8"),
 	) as PluginManifest;

@@ -29,7 +29,7 @@ Sibling project: `~/Workspace/x-plane/xp_streamdeck` (X-Plane 12). Sim-agnostic 
 |---|---|
 | Write / build / lint TS plugin | Mac (`make …`) or the sim PC (`scripts\windows\*.cmd`, see below) |
 | Run the plugin against the live sim | sim PC: `scripts\windows\deploy.cmd` (once with `-Link`), or `make gh-build` → install the artefact. Protocol checks: tsx scripts locally (`node.cmd npx tsx …`) or from the Mac over SimConnect TCP (port 502) |
-| Profiles | sim PC: build in the Stream Deck app → `sync-profiles.cmd export` → commit `profiles/*.streamDeckProfile`; `import` restores them |
+| Profiles | sim PC: build in the Stream Deck app → `sync-profiles.cmd export` → commit `profiles/*.streamDeckProfile`; `import` restores them. **`profiles/` is hand-maintained — never regenerate or rewrite a committed profile** (it holds the user's icons, order and tweaks). Change a button in the app, or patch the archive surgically and tell the user to `import`. `convert-aao.ts` / `build-lama-profile.ts` only seed a *new* aircraft into `out/profiles/` |
 | Compile WASM bridge | GitHub Actions Windows runner with the SDK's own LLVM (`make gh-build`) — the only build the sim loads. Mac `make wasm` (Homebrew LLVM) = compile check only |
 | Package the WASM module | script-generated `layout.json` / `manifest.json` (`scripts/build-bridge-package.ts`), no `fspackagetool` |
 | Debug WASM | MSFS Developer Mode console |
