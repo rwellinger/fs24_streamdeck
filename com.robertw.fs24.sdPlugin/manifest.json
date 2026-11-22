@@ -15,6 +15,7 @@
 			"States": [
 				{
 					"Image": "imgs/actions/command/key",
+					"FontSize": 13,
 					"TitleAlignment": "middle"
 				}
 			]
@@ -32,10 +33,12 @@
 			"States": [
 				{
 					"Image": "imgs/states/off",
+					"FontSize": 13,
 					"TitleAlignment": "middle"
 				},
 				{
 					"Image": "imgs/states/on",
+					"FontSize": 13,
 					"TitleAlignment": "middle"
 				}
 			]
@@ -52,6 +55,7 @@
 			"States": [
 				{
 					"Image": "imgs/actions/var-display/key",
+					"FontSize": 13,
 					"TitleAlignment": "middle"
 				}
 			]
@@ -69,14 +73,17 @@
 			"States": [
 				{
 					"Image": "imgs/states/switch_up",
+					"FontSize": 13,
 					"TitleAlignment": "middle"
 				},
 				{
 					"Image": "imgs/states/switch_mid",
+					"FontSize": 13,
 					"TitleAlignment": "middle"
 				},
 				{
 					"Image": "imgs/states/switch_down",
+					"FontSize": 13,
 					"TitleAlignment": "middle"
 				}
 			]
@@ -93,6 +100,7 @@
 			"States": [
 				{
 					"Image": "imgs/actions/var-toggle/key",
+					"FontSize": 13,
 					"TitleAlignment": "middle"
 				}
 			]
@@ -109,6 +117,7 @@
 			"States": [
 				{
 					"Image": "imgs/actions/var-toggle/key",
+					"FontSize": 13,
 					"TitleAlignment": "middle"
 				}
 			]
@@ -125,6 +134,7 @@
 			"States": [
 				{
 					"Image": "imgs/actions/wind-display/key",
+					"FontSize": 13,
 					"TitleAlignment": "middle"
 				}
 			]
@@ -141,6 +151,7 @@
 			"States": [
 				{
 					"Image": "imgs/actions/background/key",
+					"FontSize": 13,
 					"TitleAlignment": "middle"
 				}
 			]

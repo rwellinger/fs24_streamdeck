@@ -594,7 +594,7 @@ function convertAction(action: Json, plugin: PluginManifest): boolean {
 	const fullUuid = `${PLUGIN_UUID}.${mapped.uuid}`;
 	const def = plugin.Actions.find((a) => a.UUID === fullUuid);
 	if (!def) throw new Error(`action ${fullUuid} not in plugin manifest`);
-	const font = states[0]?.FontSize ?? 9;
+	const font = Math.max(states[0]?.FontSize ?? 13, 13);
 	action.UUID = fullUuid;
 	action.Name = def.Name;
 	action.Settings = mapped.settings;

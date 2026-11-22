@@ -29,7 +29,7 @@ type CommandSettings = JsonObject & {
 	eventValue?: string;
 	longEventName?: string;
 	autoRepeat?: boolean;
-	hideConfirmation?: boolean;
+	showConfirmation?: boolean;
 };
 
 @action({ UUID: "com.robertw.fs24.command" })
@@ -80,7 +80,7 @@ export class SimCommand extends SingletonAction<CommandSettings> {
 		}
 
 		const config = withLong(
-			{ short, repeat: s.autoRepeat === true, confirm: s.hideConfirmation !== true },
+			{ short, repeat: s.autoRepeat === true, confirm: s.showConfirmation === true },
 			trimString(s.longEventName),
 		);
 		if (!config.ok) {

@@ -289,7 +289,7 @@ function buildAction(b: Button, col: number, row: number, plugin: PluginManifest
 	const where = `${col},${row}`;
 	const m = mapButton(b, where);
 	const state = (title: string): Json => ({
-		FontSize: 9,
+		FontSize: 13,
 		ShowTitle: true,
 		Title: title,
 		TitleAlignment: "middle",

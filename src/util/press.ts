@@ -32,7 +32,7 @@ export type PressSettings = {
 	pressAction?: string;
 	longPressAction?: string;
 	autoRepeat?: boolean;
-	hideConfirmation?: boolean;
+	showConfirmation?: boolean;
 };
 
 /** `undefined` = no press configured (display-only key). */
@@ -43,7 +43,7 @@ export function parsePressSettings(s: PressSettings): ParseResult<PressConfig> |
 	const short = parsePressAction(shortText);
 	if (!short.ok) return { ok: false, error: `press action: ${short.error}` };
 	return withLong(
-		{ short: short.path, repeat: s.autoRepeat === true, confirm: s.hideConfirmation !== true },
+		{ short: short.path, repeat: s.autoRepeat === true, confirm: s.showConfirmation === true },
 		longText,
 	);
 }
